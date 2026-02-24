@@ -1,6 +1,7 @@
 # README.md
+
 <p align="center">
-<img src="/assets/logo.svg" alt="BlackCod Logo" width="120" />
+<img src="assets/logo.svg" alt="BlackCod Logo" width="120" />
 </p>
 
 <h1 align="center">BlackCod</h1>
@@ -11,9 +12,11 @@ A high-performance desktop application designed to organize, view, and manage yo
 </p>
 
 <p align="center">
-<img src="[https://img.shields.io/badge/version-1.1.2-blue.svg](https://www.google.com/search?q=https://img.shields.io/badge/version-1.1.2-blue.svg)" alt="Version 1.1.2" />
-<img src="[https://img.shields.io/badge/Maintained%3F-yes-green.svg](https://www.google.com/search?q=https://img.shields.io/badge/Maintained%253F-yes-green.svg)" alt="Maintained" />
-<img src="[https://img.shields.io/badge/License-MIT-yellow.svg](https://www.google.com/search?q=https://img.shields.io/badge/License-MIT-yellow.svg)" alt="License MIT" />
+<img src="[https://img.shields.io/badge/version-1.1.2-blue.svg](https://img.shields.io/badge/version-1.1.2-blue.svg)" alt="Version 1.1.2" />
+<img src="[https://img.shields.io/badge/Maintained%3F-yes-green.svg](https://img.shields.io/badge/Maintained%3F-yes-green.svg)" alt="Maintained" />
+<a href="https://www.google.com/search?q=assets/LICENSE.txt">
+<img src="[https://img.shields.io/badge/License-Custom-yellow.svg](https://www.google.com/search?q=https://img.shields.io/badge/License-Custom-yellow.svg)" alt="Custom License" />
+</a>
 </p>
 
 ---
@@ -36,16 +39,16 @@ A high-performance desktop application designed to organize, view, and manage yo
 ## 📸 Screenshots
 
 <p align="center">
-<em>Add your app screenshots below to showcase the UI</em>
+<em>Showcasing the BlackCod Interface</em>
 </p>
 
 | Installer | Home Dashboard |
 | --- | --- |
-| <img src="/assets/Install.gif" width="400" /> | <img src="path/to/screenshot2.png" width="400" /> |
+| <img src="assets/Install.gif" width="400" alt="Installer GIF" /> | <img src="assets/dashboard_placeholder.png" width="400" alt="Dashboard" /> |
 
 | Video Player | Customization Settings |
 | --- | --- |
-| <img src="path/to/screenshot3.png" width="400" /> | <img src="path/to/screenshot4.png" width="400" /> |
+| <img src="assets/player_placeholder.png" width="400" alt="Video Player" /> | <img src="assets/settings_placeholder.png" width="400" alt="Settings" /> |
 
 ---
 
@@ -71,34 +74,33 @@ BlackCod leverages a modern tech stack to ensure speed, type safety, and a small
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/17Arigato-jwd/blackcod.git
 cd blackcod
 
 ```
 
-
 2. **Install dependencies**
+
 ```bash
 npm install
 
 ```
 
-
 3. **Run the application (Development)**
+
 ```bash
 npm run dev
 
 ```
 
-
 4. **Build for Production**
+
 ```bash
 npm run build
 
 ```
-
-
 
 ---
 
@@ -106,7 +108,7 @@ npm run build
 
 ```text
 BlackCod/
-├── assets/             # Media and static files
+├── assets/             # Media, logo, and LICENSE.txt
 ├── components/         # Reusable React components
 ├── hooks/              # Custom React logic/hooks
 ├── input/              # Input handling or data entry logic
@@ -119,6 +121,7 @@ BlackCod/
 ├── vite.config.ts      # Vite bundler configuration
 ├── types.ts            # TypeScript interfaces/types
 └── metadata.json       # Project metadata and info
+
 ```
 
 ---
@@ -146,7 +149,7 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under a Custom License. See [LICENSE.txt](https://www.google.com/search?q=assets/LICENSE.txt) for more information.
 
 ---
 
