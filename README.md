@@ -43,9 +43,12 @@ A high-performance desktop application designed to organize, view, and manage yo
 </p>
 
 | Installer | Home Dashboard |
-| <img src="assets/Install.gif" width="400" alt="Installer GIF" /> | <img src="assets/dashboard_placeholder.png" width="400" alt="Dashboard" /> |
+| --- | --- |
+| <img src="assets/Install.gif" width="400" /> | <img src="path/to/screenshot2.png" width="400" /> |
+
 | Video Player | Customization Settings |
-| <img src="assets/player_placeholder.png" width="400" alt="Video Player" /> | <img src="assets/settings_placeholder.png" width="400" alt="Settings" /> |
+| --- | --- |
+| <img src="path/to/screenshot3.png" width="400" /> | <img src="path/to/screenshot4.png" width="400" /> |
 
 ---
 
