@@ -13,7 +13,7 @@ A high-performance desktop application designed to organize, view, and manage yo
 
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-1.1.2-blue.svg">
-  <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
+  <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-no-red.svg">
   <a href="assets/LICENSE.txt">
     <img alt="License" src="https://img.shields.io/badge/License-Custom-yellow.svg">
   </a>
