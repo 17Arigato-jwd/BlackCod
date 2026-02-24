@@ -1,6 +1,6 @@
 # README.md
 <p align="center">
-<img src="path/to/your/logo.png" alt="BlackCod Logo" width="120" />
+<img src="/assets/logo.svg" alt="BlackCod Logo" width="120" />
 </p>
 
 <h1 align="center">BlackCod</h1>
