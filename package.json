@@ -1,0 +1,37 @@
+{
+  "name": "blackcod",
+  "private": true,
+  "main": "dist/main.js",
+  "version": "1.1.2",
+  "description": "Blackcod desktop application",
+  "author": "VCHS Studios",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "make": "npm run build && npm run build:main && electron-forge make",
+    "package": "electron-forge package"
+  },
+  "dependencies": {
+    "idb-keyval": "6.2.1",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-legacy": "^6.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^39.2.7",
+    "regenerator-runtime": "^0.14.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

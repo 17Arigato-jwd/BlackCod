@@ -1,0 +1,48 @@
+BLACKCOD END USER LICENSE AGREEMENT ("EULA")
+
+IMPORTANT: PLEASE READ THIS LICENSE AGREEMENT CAREFULLY BEFORE INSTALLING, ACCESSING, COPYING, OR USING THE SOFTWARE.
+
+This End User License Agreement (this "Agreement") is a legal agreement between you ("User" or "You") and VCHS Studios ("Licensor", "Company", "We", or "Us") regarding your use of the BlackCod software application, including any associated media, printed materials, and "online" or electronic documentation (collectively, the "Software").
+
+BY CLICKING "I AGREE", DOWNLOADING, INSTALLING, OR OTHERWISE USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL OR USE THE SOFTWARE.
+
+1. GRANT OF LICENSE
+Subject to your strict compliance with the terms of this Agreement, VCHS Studios grants you a limited, non-exclusive, non-transferable, non-sublicensable, and revocable license to install and use one copy of the Software on a single device solely for your personal, non-commercial purposes. This license does not convey to you any interest in or to the Software, but only a limited right of use revocable in accordance with the terms of this Agreement.
+
+2. OWNERSHIP AND INTELLECTUAL PROPERTY
+The Software is licensed, not sold. You acknowledge that VCHS Studios owns all right, title, and interest in and to the Software, including without limitation all intellectual property rights, code, algorithms, graphics, and design. You acquire no ownership rights in the Software. All rights not expressly granted to you in this Agreement are reserved by VCHS Studios.
+
+3. USER RESTRICTIONS
+You agree that you will not, and will not permit any third party to:
+   (a) Reverse engineer, decompile, disassemble, or derive source code from the Software;
+   (b) Modify, adapt, translate, or create derivative works based on the Software;
+   (c) Rent, lease, lend, sell, redistribute, sublicense, or otherwise transfer rights to the Software;
+   (d) Remove, alter, or obscure any proprietary notices, labels, or marks on the Software;
+   (e) Use the Software for any commercial purpose or for the benefit of any third party;
+   (f) Use the Software in any manner that could damage, disable, overburden, or impair VCHS Studios' services or interfere with any other party's use and enjoyment of the Software.
+
+4. UPDATES AND MODIFICATIONS
+VCHS Studios reserves the right, at its sole and absolute discretion, to modify, update, suspend, or discontinue the Software or any part thereof at any time without notice to you. You agree that VCHS Studios shall not be liable to you or to any third party for any modification, suspension, or discontinuance of the Software. VCHS Studios may deploy mandatory updates, patches, or modifications to the Software that must be installed for you to continue using the Software.
+
+5. CONSENT TO DATA USE
+You agree that VCHS Studios may collect and use technical data and related information—including but not limited to technical information about your device, system and application software, and peripherals—that is gathered periodically to facilitate the provision of software updates, product support, and other services to you (if any) related to the Software. VCHS Studios may use this information, as long as it is in a form that does not personally identify you, to improve its products or to provide services or technologies to you. Furthermore, VCHS Studios reserves the right to access, read, preserve, and disclose any information as we reasonably believe is necessary to satisfy any applicable law, regulation, legal process, or governmental request.
+
+6. TERMINATION
+This Agreement is effective until terminated. VCHS Studios may terminate this Agreement at any time for any reason or no reason, with or without notice. Your rights under this Agreement will terminate automatically without notice from VCHS Studios if you fail to comply with any term(s) of this Agreement. Upon termination of this Agreement, you shall cease all use of the Software and destroy all copies, full or partial, of the Software.
+
+7. NO WARRANTY
+YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT USE OF THE SOFTWARE IS AT YOUR SOLE RISK. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. VCHS STUDIOS HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS WITH RESPECT TO THE SOFTWARE, EITHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, QUIET ENJOYMENT, AND NON-INFRINGEMENT OF THIRD-PARTY RIGHTS. VCHS STUDIOS DOES NOT WARRANT THAT THE FUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET YOUR REQUIREMENTS, THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT DEFECTS IN THE SOFTWARE WILL BE CORRECTED.
+
+8. LIMITATION OF LIABILITY
+TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT SHALL VCHS STUDIOS BE LIABLE FOR PERSONAL INJURY OR ANY INCIDENTAL, SPECIAL, INDIRECT, OR CONSEQUENTIAL DAMAGES WHATSOEVER, INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF PROFITS, LOSS OF DATA, BUSINESS INTERRUPTION, OR ANY OTHER COMMERCIAL DAMAGES OR LOSSES, ARISING OUT OF OR RELATED TO YOUR USE OF OR INABILITY TO USE THE SOFTWARE, HOWEVER CAUSED, REGARDLESS OF THE THEORY OF LIABILITY (CONTRACT, TORT, OR OTHERWISE) AND EVEN IF VCHS STUDIOS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+9. INDEMNIFICATION
+You agree to indemnify, defend, and hold harmless VCHS Studios, its affiliates, officers, directors, employees, agents, and licensors from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to your use of the Software, your violation of this Agreement, or your violation of any rights of another.
+
+10. GOVERNING LAW
+This Agreement shall be governed by and construed in accordance with the laws determined solely by VCHS Studios, without regard to its conflict of law principles.
+
+11. ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between you and VCHS Studios with respect to the Software and supersedes all prior or contemporaneous understandings regarding such subject matter. No amendment to or modification of this Agreement will be binding unless in writing and signed by VCHS Studios.
+
+BY USING THE SOFTWARE, YOU CONFIRM THAT YOU HAVE READ THIS AGREEMENT AND AGREE TO BE BOUND BY ITS TERMS.

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlackCod by VCHS Studios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              yt: {
+                black: 'var(--yt-black)',
+                dark: 'var(--yt-dark)',
+                red: 'var(--yt-red)',
+                brand: 'var(--yt-brand)',
+                text: '#f1f1f1',
+                gray: '#aaaaaa'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --yt-black: #0f0f0f;
+        --yt-dark: #272727;
+        --yt-red: #ff0000;
+        --yt-brand: #ff0000;
+      }
+      /* Custom scrollbar for Webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--yt-black); 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #555; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #888; 
+      }
+      
+      /* Blob Animations */
+      @keyframes float-1 {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(100px, 50px) rotate(10deg); }
+        66% { transform: translate(-50px, 100px) rotate(-5deg); }
+        100% { transform: translate(20px, -30px) rotate(5deg); }
+      }
+      @keyframes float-2 {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(-80px, -40px) scale(1.1); }
+        100% { transform: translate(40px, 60px) scale(0.9); }
+      }
+      @keyframes float-3 {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(60px, -60px) scale(1.2); }
+        100% { transform: translate(-20px, 40px) scale(0.8); }
+      }
+      @keyframes float-4 {
+        0% { transform: translate(-50px, -50px) rotate(0deg) scale(0.9); }
+        50% { transform: translate(150px, 100px) rotate(180deg) scale(1.1); }
+        100% { transform: translate(-50px, -50px) rotate(360deg) scale(0.9); }
+      }
+      @keyframes float-5 {
+        0% { transform: translate(0, 0) skew(0deg); }
+        50% { transform: translate(-100px, 50px) skew(5deg); }
+        100% { transform: translate(50px, -100px) skew(-5deg); }
+      }
+
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+      }
+
+      /* Custom Range Inputs for Video Player */
+      input[type=range] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type=range]:focus {
+        outline: none;
+      }
+      input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        margin-top: -4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      }
+      input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "idb-keyval": "https://esm.sh/idb-keyval@6.2.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-yt-black text-yt-text overflow-hidden transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
