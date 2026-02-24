@@ -105,16 +105,20 @@ npm run build
 ## 📂 Project Structure
 
 ```text
-├── src/
-│   ├── components/       # Reusable UI components
-│   ├── hooks/            # Custom React hooks
-│   ├── pages/            # Main views (Home, History, Liked)
-│   ├── store/            # IndexedDB logic and state management
-│   ├── types/            # TypeScript interfaces/types
-│   └── main.ts           # Electron main process
-├── public/               # Static assets
-└── tailwind.config.js    # Styling configuration
-
+BlackCod/
+├── assets/             # Media and static files
+├── components/         # Reusable React components
+├── hooks/              # Custom React logic/hooks
+├── input/              # Input handling or data entry logic
+├── utils/              # Helper functions and utilities
+├── App.tsx             # Main React application component
+├── index.html          # Entry point for the web/renderer
+├── index.tsx           # React DOM mounting script
+├── main.ts             # Electron main process entry point
+├── forge.config.cjs    # Electron Forge configuration
+├── vite.config.ts      # Vite bundler configuration
+├── types.ts            # TypeScript interfaces/types
+└── metadata.json       # Project metadata and info
 ```
 
 ---
