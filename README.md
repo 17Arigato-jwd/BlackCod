@@ -12,10 +12,10 @@ A high-performance desktop application designed to organize, view, and manage yo
 </p>
 
 <p align="center">
-<img src="[https://img.shields.io/badge/version-1.1.2-blue.svg](https://img.shields.io/badge/version-1.1.2-blue.svg)" alt="Version 1.1.2" />
-<img src="[https://img.shields.io/badge/Maintained%3F-yes-green.svg](https://img.shields.io/badge/Maintained%3F-yes-green.svg)" alt="Maintained" />
+<img src="[https://img.shields.io/badge/version-1.1.2-blue.svg]" alt="Version 1.1.2" />
+<img src="[https://img.shields.io/badge/Maintained%3F-yes-green.svg]" alt="Maintained" />
 <a href="https://www.google.com/search?q=assets/LICENSE.txt">
-<img src="[https://img.shields.io/badge/License-Custom-yellow.svg](https://www.google.com/search?q=https://img.shields.io/badge/License-Custom-yellow.svg)" alt="Custom License" />
+<img src="[https://img.shields.io/badge/License-Custom-yellow.svg]" alt="Custom License" />
 </a>
 </p>
 
@@ -45,7 +45,6 @@ A high-performance desktop application designed to organize, view, and manage yo
 | Installer | Home Dashboard |
 | --- | --- |
 | <img src="assets/Install.gif" width="400" alt="Installer GIF" /> | <img src="assets/dashboard_placeholder.png" width="400" alt="Dashboard" /> |
-
 | Video Player | Customization Settings |
 | --- | --- |
 | <img src="assets/player_placeholder.png" width="400" alt="Video Player" /> | <img src="assets/settings_placeholder.png" width="400" alt="Settings" /> |
