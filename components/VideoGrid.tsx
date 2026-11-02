@@ -6,6 +6,7 @@ interface VideoGridProps {
   videos: LocalVideo[];
   onVideoSelect: (video: LocalVideo) => void;
   density?: 'compact' | 'comfortable' | 'spacious';
+  watchProgress?: Record<string, number>;
 }
 
 const VideoPreview = ({ src }: { src: string }) => {
@@ -57,9 +58,10 @@ interface VideoCardProps {
   video: LocalVideo;
   onVideoSelect: (v: LocalVideo) => void;
   density?: 'compact' | 'comfortable' | 'spacious';
+  progress?: number;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onVideoSelect, density = 'comfortable' }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onVideoSelect, density = 'comfortable', progress = 0 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hoverTimeoutRef = useRef<number>(0);
@@ -113,6 +115,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onVideoSelect, density = '
 
         {/* Video Preview (Visible on hover after delay) */}
         {showPreview && <VideoPreview src={video.url} />}
+        {progress > 0 && video.duration > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
+            <div
+              className="h-full bg-[var(--yt-brand)]"
+              style={{ width: `${Math.min(100, (progress / video.duration) * 100)}%` }}
+            />
+          </div>
+        )}
         
         {/* Duration Badge (Hide when preview is playing) */}
         <div className={`absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-xs font-medium text-white transition-opacity duration-200 ${showPreview ? 'opacity-0' : 'opacity-100'}`}>
@@ -145,7 +155,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onVideoSelect, density = '
   );
 };
 
-export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, density = 'comfortable' }) => {
+export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, density = 'comfortable', watchProgress = {} }) => {
   // Determine grid class based on density level
   let gridClass = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"; // Comfortable (Default)
   let gapClass = "gap-x-4 gap-y-8";
@@ -166,6 +176,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, den
           video={video} 
           onVideoSelect={onVideoSelect} 
           density={density as 'compact' | 'comfortable' | 'spacious'}
+          progress={watchProgress[video.id]}
         />
       ))}
     </div>
