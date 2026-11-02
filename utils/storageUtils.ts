@@ -108,6 +108,17 @@ export const saveLibraryIndex = async (records: VideoIndexRecord[]) => {
   await set(LIBRARY_INDEX_KEY, current);
 };
 
+export const reconcileLibraryIndex = async (libraryId: string, activeVideoIds: string[]) => {
+  const current = await loadLibraryIndex();
+  const activeIds = new Set(activeVideoIds);
+  Object.values(current).forEach(record => {
+    if (record.libraryId === libraryId && !activeIds.has(record.id)) {
+      current[record.id] = { ...record, status: 'missing' };
+    }
+  });
+  await set(LIBRARY_INDEX_KEY, current);
+};
+
 export const loadVideoTags = async (): Promise<Record<string, VideoTag[]>> =>
   (await get(VIDEO_TAGS_KEY)) || {};
 

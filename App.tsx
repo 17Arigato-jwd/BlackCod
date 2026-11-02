@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord } from './types';
-import { isVideoFile } from './utils/videoUtils';
+import { getVideoId, isVideoFile } from './utils/videoUtils';
 import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
 import { deriveLocalTags } from './utils/tagUtils';
 import { Header } from './components/Header';
@@ -45,7 +45,8 @@ import {
   saveLibraryIndex,
   saveVideoTags,
   loadVideoTags,
-  loadLibraryIndex
+  loadLibraryIndex,
+  reconcileLibraryIndex
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
@@ -502,6 +503,7 @@ const App: React.FC = () => {
     });
     const indexRecords = processedVideos.map(video => toVideoIndexRecord(video, sourceName));
     await saveLibraryIndex(indexRecords);
+    await reconcileLibraryIndex(sourceName, videoFiles.map(file => getVideoId(file, sourceName)));
     indexRecords.forEach(record => {
       libraryIndexRef.current[record.id] = record;
     });
