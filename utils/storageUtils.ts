@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AppConfig, ChannelConfig } from '../types';
+import { AppConfig, ChannelConfig, Playlist } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -7,10 +7,12 @@ const CHANNEL_DATA_KEY = 'localtube_channel_data';
 const CHANNEL_HANDLES_KEY = 'localtube_channel_handles';
 const THUMBNAIL_STORE_PREFIX = 'thumb_';
 const DIR_HANDLE_KEY = 'localtube_dir_handle'; // Legacy single handle
+const PLAYLISTS_KEY = 'localtube_playlists';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
   history: [],
+  watchProgress: {},
   ratings: {},
   hiddenVideoIds: [],
   customVideoTitles: {},
@@ -30,15 +32,137 @@ export const defaultConfig: AppConfig = {
 
 export const defaultChannelData: Record<string, ChannelConfig> = {};
 
+export const loadPlaylists = (): Playlist[] => {
+  try {
+    const stored = localStorage.getItem(PLAYLISTS_KEY);
+    if (!stored) return [];
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((playlist): playlist is Playlist =>
+      !!playlist &&
+      typeof playlist === 'object' &&
+      typeof (playlist as Playlist).id === 'string' &&
+      typeof (playlist as Playlist).name === 'string' &&
+      Array.isArray((playlist as Playlist).videoIds)
+    );
+  } catch (error) {
+    console.error('Failed to load playlists.', error);
+    return [];
+  }
+};
+
+const savePlaylists = (playlists: Playlist[]) => {
+  localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
+};
+
+export const createPlaylist = (name: string): Playlist => {
+  const now = Date.now();
+  const playlist: Playlist = {
+    id: crypto.randomUUID(),
+    name: name.trim() || 'New Playlist',
+    description: '',
+    videoIds: [],
+    createdAt: now,
+    updatedAt: now
+  };
+  savePlaylists([...loadPlaylists(), playlist]);
+  return playlist;
+};
+
+export const addVideoToPlaylist = (playlistId: string, videoId: string): Playlist[] => {
+  const playlists = loadPlaylists().map(playlist =>
+    playlist.id === playlistId && !playlist.videoIds.includes(videoId)
+      ? { ...playlist, videoIds: [...playlist.videoIds, videoId], updatedAt: Date.now() }
+      : playlist
+  );
+  savePlaylists(playlists);
+  return playlists;
+};
+
+export const removeVideoFromPlaylist = (playlistId: string, videoId: string): Playlist[] => {
+  const playlists = loadPlaylists().map(playlist =>
+    playlist.id === playlistId
+      ? { ...playlist, videoIds: playlist.videoIds.filter(id => id !== videoId), updatedAt: Date.now() }
+      : playlist
+  );
+  savePlaylists(playlists);
+  return playlists;
+};
+
 // --- Config Management (LocalStorage) ---
 
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(item => typeof item === 'string');
+
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  !!value && typeof value === 'object' && !Array.isArray(value) &&
+  Object.values(value).every(item => typeof item === 'string');
+
+const isNumberRecord = (value: unknown): value is Record<string, number> =>
+  !!value && typeof value === 'object' && !Array.isArray(value) &&
+  Object.values(value).every(item => typeof item === 'number' && Number.isFinite(item));
+
+const normalizeConfig = (value: unknown): AppConfig => {
+  const parsed = value && typeof value === 'object' ? value as Partial<AppConfig> : {};
+  const userProfile = parsed.userProfile && typeof parsed.userProfile === 'object'
+    ? parsed.userProfile
+    : defaultConfig.userProfile;
+
+  return {
+    ...defaultConfig,
+    ...parsed,
+    likedVideoIds: isStringArray(parsed.likedVideoIds) ? [...new Set(parsed.likedVideoIds)] : [],
+    history: isStringArray(parsed.history) ? [...new Set(parsed.history)].slice(0, 50) : [],
+    watchProgress: isNumberRecord(parsed.watchProgress)
+      ? Object.fromEntries(Object.entries(parsed.watchProgress).filter(([, seconds]) => seconds >= 0))
+      : {},
+    ratings: isNumberRecord(parsed.ratings)
+      ? Object.fromEntries(Object.entries(parsed.ratings).filter(([, rating]) => rating >= 1 && rating <= 5))
+      : {},
+    hiddenVideoIds: isStringArray(parsed.hiddenVideoIds) ? [...new Set(parsed.hiddenVideoIds)] : [],
+    customVideoTitles: isStringRecord(parsed.customVideoTitles) ? parsed.customVideoTitles : {},
+    customCategories: isStringArray(parsed.customCategories) ? [...new Set(parsed.customCategories)] : [],
+    videoChannelOverrides: isStringRecord(parsed.videoChannelOverrides) ? parsed.videoChannelOverrides : {},
+    userProfile: {
+      name: typeof userProfile?.name === 'string' && userProfile.name.trim()
+        ? userProfile.name.trim()
+        : 'User',
+      ...(typeof userProfile?.avatarDataUrl === 'string'
+        ? { avatarDataUrl: userProfile.avatarDataUrl }
+        : {})
+    },
+    themeColor: typeof parsed.themeColor === 'string' ? parsed.themeColor : defaultConfig.themeColor,
+    customThemeColor: typeof parsed.customThemeColor === 'string'
+      ? parsed.customThemeColor
+      : defaultConfig.customThemeColor,
+    enableGradient: typeof parsed.enableGradient === 'boolean'
+      ? parsed.enableGradient
+      : defaultConfig.enableGradient,
+    uiDensity: parsed.uiDensity === 'compact' || parsed.uiDensity === 'spacious'
+      ? parsed.uiDensity
+      : 'comfortable',
+    autoplay: typeof parsed.autoplay === 'boolean' ? parsed.autoplay : defaultConfig.autoplay,
+    defaultSort: parsed.defaultSort === 'name' || parsed.defaultSort === 'size'
+      ? parsed.defaultSort
+      : 'date',
+    startupFolderNames: isStringArray(parsed.startupFolderNames)
+      ? [...new Set(parsed.startupFolderNames)]
+      : []
+  };
+};
+
 export const loadConfig = (): AppConfig => {
-  const stored = localStorage.getItem(CONFIG_KEY);
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    return { ...defaultConfig, ...parsed };
+  try {
+    const stored = localStorage.getItem(CONFIG_KEY);
+    if (stored) {
+      const config = normalizeConfig(JSON.parse(stored));
+      saveConfig(config);
+      return config;
+    }
+  } catch (error) {
+    console.error('Failed to load saved configuration; using defaults.', error);
   }
-  return defaultConfig;
+  return normalizeConfig(defaultConfig);
 };
 
 export const saveConfig = (config: AppConfig) => {
@@ -133,6 +257,15 @@ export const addToHistory = (videoId: string): AppConfig => {
   return config;
 };
 
+export const saveVideoProgress = (videoId: string, seconds: number): AppConfig => {
+  const config = loadConfig();
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    config.watchProgress[videoId] = seconds;
+    saveConfig(config);
+  }
+  return config;
+};
+
 // --- Video Data Export/Import Helpers ---
 
 export const getVideoExportData = () => {
@@ -146,17 +279,17 @@ export const getVideoExportData = () => {
   };
 };
 
-export const importVideoData = (data: any) => {
+export const importVideoData = (data: unknown) => {
   const config = loadConfig();
-  // STRAIGHT REPLACE: Overwrite the video metadata fields with the uploaded ones
-  const newConfig = {
+  const imported = data && typeof data === 'object' ? data as Record<string, unknown> : {};
+  const newConfig = normalizeConfig({
     ...config,
-    customVideoTitles: data.customVideoTitles || {},
-    ratings: data.ratings || {},
-    videoChannelOverrides: data.videoChannelOverrides || {},
-    hiddenVideoIds: data.hiddenVideoIds || [],
-    likedVideoIds: data.likedVideoIds || []
-  };
+    customVideoTitles: imported.customVideoTitles,
+    ratings: imported.ratings,
+    videoChannelOverrides: imported.videoChannelOverrides,
+    hiddenVideoIds: imported.hiddenVideoIds,
+    likedVideoIds: imported.likedVideoIds
+  });
   saveConfig(newConfig);
   return newConfig;
 };

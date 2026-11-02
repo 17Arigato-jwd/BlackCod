@@ -4,7 +4,14 @@ import path from "path";
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
-    height: 800
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true
+    }
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {

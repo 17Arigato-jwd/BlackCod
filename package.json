@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
+    "typecheck": "tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.main.json",
     "make": "npm run build && npm run build:main && electron-forge make",
     "package": "electron-forge package"
   },

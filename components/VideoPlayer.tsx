@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { LocalVideo, ChannelConfig } from '../types';
-import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check } from 'lucide-react';
+import { LocalVideo, ChannelConfig, Playlist } from '../types';
+import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
 import { CustomVideoPlayer } from './CustomVideoPlayer';
@@ -24,6 +24,8 @@ interface VideoPlayerProps {
   enableGradient?: boolean;
   autoplay?: boolean;
   startTime?: number;
+  playlists: Playlist[];
+  onAddToPlaylist: (playlistId: string) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -31,6 +33,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
+  const [selectedPlaylist, setSelectedPlaylist] = useState('');
 
   // Ref to track time for sync if needed, though mostly handled by CustomVideoPlayer props in App
   const lastTimeRef = useRef(0);
@@ -219,6 +222,26 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                  <Download className="w-4 h-4" />
                  <span className="text-sm font-medium">Download</span>
                </button>
+               <label className={`flex items-center gap-2 px-3 h-9 rounded-full ${btn3d}`}>
+                 <ListPlus className="w-4 h-4" />
+                 <select
+                   value={selectedPlaylist}
+                   onChange={(event) => {
+                     const playlistId = event.target.value;
+                     setSelectedPlaylist('');
+                     if (playlistId) onAddToPlaylist(playlistId);
+                   }}
+                   className="max-w-32 bg-transparent text-sm font-medium text-white outline-none"
+                   aria-label="Add video to playlist"
+                 >
+                   <option value="" className="bg-[#181818]">Add to playlist</option>
+                   {playlists.map(playlist => (
+                     <option key={playlist.id} value={playlist.id} className="bg-[#181818]">
+                       {playlist.name}
+                     </option>
+                   ))}
+                 </select>
+               </label>
             </div>
           </div>
 

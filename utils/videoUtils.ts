@@ -6,6 +6,12 @@ export const isVideoFile = (file: File): boolean => {
   return videoExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
 };
 
+export const getVideoId = (file: File, libraryName = ''): string => {
+  const relativePath = file.webkitRelativePath || file.name;
+  const location = libraryName ? `${libraryName}/${relativePath}` : relativePath;
+  return `${location}-${file.size}-${file.lastModified}`;
+};
+
 export const formatDuration = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
   

@@ -1,14 +1,12 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob } from './types';
-import { extractMetadata, isVideoFile } from './utils/videoUtils';
+import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
+import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist } from './types';
+import { isVideoFile } from './utils/videoUtils';
+import { createLocalVideo } from './utils/libraryUtils';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { VideoGrid } from './components/VideoGrid';
 import { VideoPlayer } from './components/VideoPlayer';
 import { MiniPlayer } from './components/MiniPlayer';
-import { ChannelView } from './components/ChannelView';
-import { FoldersView } from './components/FoldersView';
-import { SettingsView } from './components/SettingsView';
 import { GradientBackground } from './components/GradientBackground';
 import { LoadingAnimation } from './components/LoadingAnimation';
 import { 
@@ -21,7 +19,6 @@ import {
   toggleLike, 
   addToHistory, 
   saveCustomThumbnail, 
-  getCustomThumbnail,
   getDirectoryHandle,
   verifyPermission,
   getFilesRecursively,
@@ -38,8 +35,15 @@ import {
   loadChannelHandles,
   defaultConfig,
   importVideoData,
-  importChannelData
+  importChannelData,
+  saveVideoProgress,
+  loadPlaylists,
+  addVideoToPlaylist
 } from './utils/storageUtils';
+
+const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
+const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
+const SettingsView = lazy(() => import('./components/SettingsView').then(module => ({ default: module.SettingsView })));
 
 // Theme Palettes
 const THEMES: Record<string, { black: string; dark: string; red: string }> = {
@@ -83,6 +87,7 @@ const App: React.FC = () => {
   
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
   const playbackTimeRef = useRef(0);
+  const playbackSaveTimeoutRef = useRef<number | null>(null);
   
   const [uploadQueue, setUploadQueue] = useState<UploadJob[]>([]);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -105,6 +110,7 @@ const App: React.FC = () => {
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [config, setConfig] = useState<AppConfig>(loadConfig());
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => loadPlaylists());
   const [needsPermission, setNeedsPermission] = useState(false);
   const [skippedIntro, setSkippedIntro] = useState(false);
   
@@ -124,10 +130,36 @@ const App: React.FC = () => {
 
   const legacyInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videosRef = useRef<LocalVideo[]>([]);
+  const channelConfigsRef = useRef<Record<string, ChannelConfig>>({});
 
   const isUploadLimitReached = uploadQueue.length >= 3;
   const hasVideos = videos.length > 0;
   const enableGradient = config.enableGradient;
+
+  useEffect(() => {
+    videosRef.current = videos;
+  }, [videos]);
+
+  useEffect(() => {
+    channelConfigsRef.current = channelConfigs;
+  }, [channelConfigs]);
+
+  useEffect(() => {
+    return () => {
+      if (playbackSaveTimeoutRef.current !== null) {
+        window.clearTimeout(playbackSaveTimeoutRef.current);
+      }
+      videosRef.current.forEach(video => {
+        URL.revokeObjectURL(video.url);
+        if (video.thumbnailUrl?.startsWith('blob:')) URL.revokeObjectURL(video.thumbnailUrl);
+      });
+      Object.keys(channelConfigsRef.current).forEach(key => {
+        const channel = channelConfigsRef.current[key];
+        if (channel.iconUrl?.startsWith('blob:')) URL.revokeObjectURL(channel.iconUrl);
+      });
+    };
+  }, []);
 
   const addNotification = (message: string) => {
     const id = Date.now().toString();
@@ -244,7 +276,7 @@ const App: React.FC = () => {
 
           if (usableHandles.length > 0) {
              setIsRestoring(true);
-             Promise.all(usableHandles.map(async ({ handle, name }) => {
+             await Promise.all(usableHandles.map(async ({ handle, name }) => {
                 try {
                   const files = await getFilesRecursively(handle);
                   await processFiles(files, name, true, name); 
@@ -252,10 +284,16 @@ const App: React.FC = () => {
                   console.error(e);
                   addNotification(`Failed to load folder: ${name}`);
                 }
-             })).finally(() => setIsRestoring(false));
+             }));
+             setIsRestoring(false);
           }
         }
-      } catch (err) { console.error(err); } finally { setIsLibraryLoading(false); }
+      } catch (err) {
+        console.error('Failed to initialize library.', err);
+        addNotification('Failed to restore the saved library.');
+      } finally {
+        setIsLibraryLoading(false);
+      }
     };
     init();
   }, []);
@@ -266,7 +304,8 @@ const App: React.FC = () => {
      const remainingPerms: FileSystemDirectoryHandle[] = [];
      for (const handle of permissionRequiredHandles) {
        if (await verifyPermission(handle)) {
-          getFilesRecursively(handle).then(files => processFiles(files, handle.name, true, handle.name));
+          const files = await getFilesRecursively(handle);
+          await processFiles(files, handle.name, true, handle.name);
        } else remainingPerms.push(handle);
      }
      setPermissionRequiredHandles(remainingPerms);
@@ -278,7 +317,8 @@ const App: React.FC = () => {
     const remainingPerms: FileSystemDirectoryHandle[] = [];
     for (const handle of permissionRequiredHandles) {
       if (await verifyPermission(handle)) {
-         getFilesRecursively(handle).then(files => processFiles(files, handle.name, true, handle.name));
+         const files = await getFilesRecursively(handle);
+         await processFiles(files, handle.name, true, handle.name);
       } else remainingPerms.push(handle);
     }
     setPermissionRequiredHandles(remainingPerms);
@@ -417,40 +457,34 @@ const App: React.FC = () => {
   };
 
   const processFiles = async (videoFiles: File[], sourceName: string = "Upload", silent = false, forceChannelName?: string) => {
-    const jobId = Date.now().toString() + Math.random().toString();
+    const jobId = crypto.randomUUID();
     const newJob: UploadJob = { id: jobId, name: sourceName, current: 0, total: videoFiles.length };
     setUploadQueue(prev => [...prev, newJob]);
 
     const processedVideos: LocalVideo[] = [];
     const CHUNK_SIZE = 5;
+    let lastProgressUpdate = 0;
     
     for (let i = 0; i < videoFiles.length; i++) {
       const file = videoFiles[i];
-      const id = `${file.name}-${file.size}-${file.lastModified}`;
-      if (!config.hiddenVideoIds.includes(id)) {
-        let channelName = config.videoChannelOverrides?.[id] || forceChannelName || 'Uncategorized';
-        if (channelName === 'Uncategorized' && file.webkitRelativePath) {
-          const parts = file.webkitRelativePath.split('/');
-          if (parts.length > 1) channelName = parts.slice(0, -1).join('/');
-        }
-        
-        const customThumb = await getCustomThumbnail(id);
-        const metadata = await extractMetadata(file);
-        if (customThumb) metadata.thumbnailUrl = customThumb;
+      const video = await createLocalVideo(file, config, sourceName, forceChannelName);
+      if (video) processedVideos.push(video);
 
-        processedVideos.push({
-          id, file, title: config.customVideoTitles[id] || file.name.replace(/\.[^/.]+$/, ""),
-          channelName, url: URL.createObjectURL(file), thumbnailUrl: metadata.thumbnailUrl,
-          duration: metadata.duration, size: file.size, lastModified: file.lastModified
-        });
+      if (i === videoFiles.length - 1 || i - lastProgressUpdate >= 10) {
+        lastProgressUpdate = i;
+        setUploadQueue(prev => prev.map(job => job.id === jobId ? { ...job, current: i + 1 } : job));
       }
-
-      setUploadQueue(prev => prev.map(job => job.id === jobId ? { ...job, current: i + 1 } : job));
       if (i % CHUNK_SIZE === 0) await new Promise(r => setTimeout(r, 0));
     }
     
     setVideos(prev => {
        const newIds = new Set(processedVideos.map(v => v.id));
+       prev.forEach(video => {
+         if (newIds.has(video.id)) {
+           URL.revokeObjectURL(video.url);
+           if (video.thumbnailUrl?.startsWith('blob:')) URL.revokeObjectURL(video.thumbnailUrl);
+         }
+       });
        return [...prev.filter(v => !newIds.has(v.id)), ...processedVideos];
     });
     setUploadQueue(prev => prev.filter(job => job.id !== jobId));
@@ -500,8 +534,25 @@ const App: React.FC = () => {
     setSelectedVideo(video);
     setIsMiniPlayer(false);
     setConfig(addToHistory(video.id));
-    playbackTimeRef.current = 0;
+    playbackTimeRef.current = config.watchProgress[video.id] || 0;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePlaybackTimeUpdate = (time: number) => {
+    playbackTimeRef.current = time;
+    if (!selectedVideo) return;
+    if (playbackSaveTimeoutRef.current !== null) {
+      window.clearTimeout(playbackSaveTimeoutRef.current);
+    }
+    playbackSaveTimeoutRef.current = window.setTimeout(() => {
+      setConfig(saveVideoProgress(selectedVideo.id, time));
+      playbackSaveTimeoutRef.current = null;
+    }, 1000);
+  };
+
+  const handleAddToPlaylist = (videoId: string, playlistId: string) => {
+    setPlaylists(addVideoToPlaylist(playlistId, videoId));
+    addNotification('Added video to playlist.');
   };
 
   const handleUpdateChannel = async (id: string, updates: Partial<ChannelConfig>) => {
@@ -530,6 +581,23 @@ const App: React.FC = () => {
       default: return filtered;
     }
   }, [videos, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
+
+  const visibleVideos = useMemo(
+    () => displayedVideos.slice(0, visibleCount),
+    [displayedVideos, visibleCount]
+  );
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchTerm, config.defaultSort, viewState, selectedChannel]);
+
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    window.setTimeout(() => {
+      setVisibleCount(count => count + 20);
+      setIsLoadingMore(false);
+    }, 0);
+  };
 
   const channels: Channel[] = Array.from(new Set(videos.map(v => v.channelName))).map((name: string) => ({
     name, videoCount: videos.filter(v => v.channelName === name).length
@@ -633,14 +701,31 @@ const App: React.FC = () => {
           <Sidebar isOpen={isSidebarOpen && !selectedVideo} currentView={viewState} onNavigate={handleNavigate} uploadQueue={uploadQueue} enableGradient={enableGradient} density={config.uiDensity} />
           <main className={`flex-1 transition-all duration-200 h-[calc(100vh-56px)] overflow-y-auto ${(isSidebarOpen && !selectedVideo) ? 'sm:ml-60' : 'sm:ml-[72px]'}`}>
             {selectedVideo && !isMiniPlayer ? (
-              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} onVideoSelect={handleVideoSelect} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={t => playbackTimeRef.current = t} />
+              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} onVideoSelect={handleVideoSelect} playlists={playlists} onAddToPlaylist={(playlistId) => handleAddToPlaylist(selectedVideo.id, playlistId)} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={handlePlaybackTimeUpdate} />
             ) : (
+              <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading view...</div>}>
               <div>
                 {viewState === 'settings' ? <SettingsView config={config} onUpdateConfig={setConfig} /> : 
                  viewState === 'channel' && selectedChannel ? <ChannelView channelName={selectedChannel} config={channelConfigs[selectedChannel] || { id: selectedChannel, category: 'Uncategorized', isSubscribed: false }} videos={videos.filter(v => v.channelName === selectedChannel)} allVideos={videos} onUpdateChannel={handleUpdateChannel} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} onVideoSelect={handleVideoSelect} customCategories={config.customCategories} onAddCategory={c => setConfig(addCustomCategory(c))} enableGradient={enableGradient} density={config.uiDensity} /> :
                  viewState === 'folders' ? <FoldersView channels={channels} channelConfigs={channelConfigs} allVideos={videos} customCategories={config.customCategories} searchTerm={searchTerm} onToggleSubscribe={n => handleUpdateChannel(n, { isSubscribed: !channelConfigs[n]?.isSubscribed })} onNavigateChannel={n => { setSelectedChannel(n); setViewState('channel'); }} onUpdateChannelName={(id, n) => handleUpdateChannel(id, { displayName: n })} onRemoveChannel={n => { setConfig(moveVideosToChannel(videos.filter(v => v.channelName === n).map(v => v.id), 'Uncategorized')); setVideos(v => v.map(x => x.channelName === n ? { ...x, channelName: 'Uncategorized' } : x)); deleteChannelConfig(n); }} onAddFolder={handleDirectoryPick} onCreateCustomFolder={(n, c, i, v) => { handleUpdateChannel(n, { displayName: n.split('/').pop(), category: c, iconBlob: i || undefined, isSubscribed: true }); setConfig(moveVideosToChannel(v, n)); }} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} isUploadLimitReached={isUploadLimitReached} enableGradient={enableGradient} density={config.uiDensity} onVideoSelect={handleVideoSelect} /> :
-                 <VideoGrid videos={displayedVideos} onVideoSelect={handleVideoSelect} density={config.uiDensity} />}
+                 <>
+                   <VideoGrid videos={visibleVideos} onVideoSelect={handleVideoSelect} density={config.uiDensity} />
+                   {visibleCount < displayedVideos.length && (
+                     <div className="flex justify-center pb-20">
+                       <button
+                         type="button"
+                         onClick={handleLoadMore}
+                         disabled={isLoadingMore}
+                         className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 disabled:cursor-wait disabled:opacity-60"
+                       >
+                         {isLoadingMore ? 'Loading...' : `Load more (${displayedVideos.length - visibleCount} remaining)`}
+                       </button>
+                     </div>
+                   )}
+                 </>
+                 }
               </div>
+              </Suspense>
             )}
           </main>
         </div>
@@ -704,7 +789,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {selectedVideo && isMiniPlayer && <MiniPlayer video={selectedVideo} currentTime={playbackTimeRef.current} onClose={() => { setSelectedVideo(null); setIsMiniPlayer(false); }} onExpand={() => setIsMiniPlayer(false)} onTimeUpdate={t => playbackTimeRef.current = t} enableGradient={enableGradient} />}
+      {selectedVideo && isMiniPlayer && <MiniPlayer video={selectedVideo} currentTime={playbackTimeRef.current} onClose={() => { setSelectedVideo(null); setIsMiniPlayer(false); }} onExpand={() => setIsMiniPlayer(false)} onTimeUpdate={handlePlaybackTimeUpdate} enableGradient={enableGradient} />}
       <div className="fixed bottom-20 right-8 z-50 flex flex-col gap-2">
         {notifications.map(n => (
           <div key={n.id} className="text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 bg-red-900/90 animate-in slide-in-from-right">
