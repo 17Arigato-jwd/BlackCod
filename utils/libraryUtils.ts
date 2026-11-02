@@ -1,4 +1,4 @@
-import { AppConfig, LocalVideo } from '../types';
+import { AppConfig, LocalVideo, VideoIndexRecord } from '../types';
 import { extractMetadata, getVideoId } from './videoUtils';
 import { getCustomThumbnail } from './storageUtils';
 
@@ -38,3 +38,18 @@ export const createLocalVideo = async (
     lastModified: file.lastModified
   };
 };
+
+export const toVideoIndexRecord = (
+  video: LocalVideo,
+  libraryId: string
+): VideoIndexRecord => ({
+  id: video.id,
+  libraryId,
+  path: getLibraryRelativePath(video.file),
+  size: video.size,
+  modifiedTime: video.lastModified,
+  duration: video.duration,
+  title: video.title,
+  status: 'ready',
+  indexedAt: Date.now()
+});

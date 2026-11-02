@@ -24,6 +24,18 @@ export interface VideoRecord {
   status: 'ready' | 'missing' | 'error';
 }
 
+export interface VideoIndexRecord {
+  id: string;
+  libraryId: string;
+  path: string;
+  size: number;
+  modifiedTime: number;
+  duration: number | null;
+  title: string;
+  status: 'ready' | 'missing' | 'error';
+  indexedAt: number;
+}
+
 export interface VideoMetadata {
   thumbnailUrl: string | null;
   duration: number;

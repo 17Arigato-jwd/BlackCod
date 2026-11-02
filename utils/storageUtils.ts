@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AppConfig, ChannelConfig, Playlist } from '../types';
+import { AppConfig, ChannelConfig, Playlist, VideoIndexRecord } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -8,6 +8,7 @@ const CHANNEL_HANDLES_KEY = 'localtube_channel_handles';
 const THUMBNAIL_STORE_PREFIX = 'thumb_';
 const DIR_HANDLE_KEY = 'localtube_dir_handle'; // Legacy single handle
 const PLAYLISTS_KEY = 'localtube_playlists';
+const LIBRARY_INDEX_KEY = 'localtube_library_index';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -87,6 +88,17 @@ export const removeVideoFromPlaylist = (playlistId: string, videoId: string): Pl
   );
   savePlaylists(playlists);
   return playlists;
+};
+
+export const loadLibraryIndex = async (): Promise<Record<string, VideoIndexRecord>> =>
+  (await get(LIBRARY_INDEX_KEY)) || {};
+
+export const saveLibraryIndex = async (records: VideoIndexRecord[]) => {
+  const current = await loadLibraryIndex();
+  records.forEach(record => {
+    current[record.id] = record;
+  });
+  await set(LIBRARY_INDEX_KEY, current);
 };
 
 // --- Config Management (LocalStorage) ---

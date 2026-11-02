@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist } from './types';
 import { isVideoFile } from './utils/videoUtils';
-import { createLocalVideo } from './utils/libraryUtils';
+import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { VideoGrid } from './components/VideoGrid';
@@ -39,7 +39,8 @@ import {
   saveVideoProgress,
   loadPlaylists,
   addVideoToPlaylist,
-  createPlaylist
+  createPlaylist,
+  saveLibraryIndex
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
@@ -488,6 +489,7 @@ const App: React.FC = () => {
        });
        return [...prev.filter(v => !newIds.has(v.id)), ...processedVideos];
     });
+    await saveLibraryIndex(processedVideos.map(video => toVideoIndexRecord(video, sourceName)));
     setUploadQueue(prev => prev.filter(job => job.id !== jobId));
   };
 
