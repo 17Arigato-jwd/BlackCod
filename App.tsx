@@ -592,7 +592,15 @@ const App: React.FC = () => {
 
   const displayedVideos = useMemo(() => {
     let filtered = [...videos];
-    if (searchTerm) filtered = filtered.filter(v => v.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (searchTerm) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(video =>
+        video.title.toLowerCase().includes(query)
+        || video.file.name.toLowerCase().includes(query)
+        || video.channelName.toLowerCase().includes(query)
+        || (videoTags[video.id] || []).some(tag => tag.tag.includes(query))
+      );
+    }
     const sortMode = config.defaultSort || 'date';
     filtered.sort((a, b) => {
        if (sortMode === 'name') return a.title.localeCompare(b.title);
@@ -601,12 +609,17 @@ const App: React.FC = () => {
     });
 
     switch (viewState) {
-      case 'history': return config.history.map(id => videos.find(v => v.id === id)).filter((v): v is LocalVideo => !!v);
+      case 'history': {
+        const videosById = new Map(videos.map(video => [video.id, video]));
+        return config.history
+          .map(id => videosById.get(id))
+          .filter((v): v is LocalVideo => !!v);
+      }
       case 'liked': return filtered.filter(v => config.likedVideoIds.includes(v.id));
       case 'channel': return filtered.filter(v => v.channelName === selectedChannel);
       default: return filtered;
     }
-  }, [videos, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
+  }, [videos, videoTags, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
 
   const visibleVideos = useMemo(
     () => displayedVideos.slice(0, visibleCount),
@@ -625,9 +638,11 @@ const App: React.FC = () => {
     }, 0);
   };
 
-  const channels: Channel[] = Array.from(new Set(videos.map(v => v.channelName))).map((name: string) => ({
-    name, videoCount: videos.filter(v => v.channelName === name).length
-  }));
+  const channels = useMemo<Channel[]>(() => {
+    const counts = new Map<string, number>();
+    videos.forEach(video => counts.set(video.channelName, (counts.get(video.channelName) || 0) + 1));
+    return [...counts.entries()].map(([name, videoCount]) => ({ name, videoCount }));
+  }, [videos]);
 
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   
