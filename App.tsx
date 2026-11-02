@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
-import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord } from './types';
+import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord, SmartChannel } from './types';
 import { getVideoId, isVideoFile } from './utils/videoUtils';
 import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
 import { deriveLocalTags } from './utils/tagUtils';
@@ -46,13 +46,16 @@ import {
   saveVideoTags,
   loadVideoTags,
   loadLibraryIndex,
-  reconcileLibraryIndex
+  reconcileLibraryIndex,
+  loadSmartChannels,
+  saveSmartChannels
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
 const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
 const SettingsView = lazy(() => import('./components/SettingsView').then(module => ({ default: module.SettingsView })));
 const PlaylistsView = lazy(() => import('./components/PlaylistsView').then(module => ({ default: module.PlaylistsView })));
+const SmartChannelsView = lazy(() => import('./components/SmartChannelsView').then(module => ({ default: module.SmartChannelsView })));
 
 // Theme Palettes
 const THEMES: Record<string, { black: string; dark: string; red: string }> = {
@@ -121,6 +124,7 @@ const App: React.FC = () => {
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
   const [playlists, setPlaylists] = useState<Playlist[]>(() => loadPlaylists());
   const [videoTags, setVideoTags] = useState<Record<string, VideoTag[]>>({});
+  const [smartChannels, setSmartChannels] = useState<SmartChannel[]>(() => loadSmartChannels());
   const libraryIndexRef = useRef<Record<string, VideoIndexRecord>>({});
   const [needsPermission, setNeedsPermission] = useState(false);
   const [skippedIntro, setSkippedIntro] = useState(false);
@@ -199,6 +203,15 @@ const App: React.FC = () => {
       try {
         setVideoTags(await loadVideoTags());
         libraryIndexRef.current = await loadLibraryIndex();
+        if (smartChannels.length === 0) {
+          const defaults: SmartChannel[] = [
+            { id: 'unwatched', name: 'Unwatched', rules: [{ field: 'watched', operator: 'equals', value: false }], matchMode: 'all', sort: 'recent' },
+            { id: 'long-videos', name: 'Long Videos', rules: [{ field: 'duration', operator: 'greaterThan', value: 1200 }], matchMode: 'all', sort: 'name' },
+            { id: 'liked', name: 'Liked Videos', rules: [{ field: 'liked', operator: 'equals', value: true }], matchMode: 'all', sort: 'recent' }
+          ];
+          setSmartChannels(defaults);
+          saveSmartChannels(defaults);
+        }
         const loadedChannels = await loadChannels();
         const processed: Record<string, ChannelConfig> = {};
         for (const [key, val] of Object.entries(loadedChannels)) {
@@ -767,6 +780,7 @@ const App: React.FC = () => {
               <div>
                 {viewState === 'settings' ? <SettingsView config={config} onUpdateConfig={setConfig} /> :
                 viewState === 'playlists' ? <PlaylistsView playlists={playlists} videos={videos} onCreatePlaylist={handleCreatePlaylistFromView} onDeletePlaylist={(id) => setPlaylists(deletePlaylist(id))} onVideoSelect={handleVideoSelect} /> :
+                viewState === 'smart_channels' ? <SmartChannelsView channels={smartChannels} videos={videos} config={config} tags={videoTags} onSelect={handleVideoSelect} /> :
                  viewState === 'channel' && selectedChannel ? <ChannelView channelName={selectedChannel} config={channelConfigs[selectedChannel] || { id: selectedChannel, category: 'Uncategorized', isSubscribed: false }} videos={videos.filter(v => v.channelName === selectedChannel)} allVideos={videos} onUpdateChannel={handleUpdateChannel} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} onVideoSelect={handleVideoSelect} customCategories={config.customCategories} onAddCategory={c => setConfig(addCustomCategory(c))} enableGradient={enableGradient} density={config.uiDensity} /> :
                  viewState === 'folders' ? <FoldersView channels={channels} channelConfigs={channelConfigs} allVideos={videos} customCategories={config.customCategories} searchTerm={searchTerm} onToggleSubscribe={n => handleUpdateChannel(n, { isSubscribed: !channelConfigs[n]?.isSubscribed })} onNavigateChannel={n => { setSelectedChannel(n); setViewState('channel'); }} onUpdateChannelName={(id, n) => handleUpdateChannel(id, { displayName: n })} onRemoveChannel={n => { setConfig(moveVideosToChannel(videos.filter(v => v.channelName === n).map(v => v.id), 'Uncategorized')); setVideos(v => v.map(x => x.channelName === n ? { ...x, channelName: 'Uncategorized' } : x)); deleteChannelConfig(n); }} onAddFolder={handleDirectoryPick} onCreateCustomFolder={(n, c, i, v) => { handleUpdateChannel(n, { displayName: n.split('/').pop(), category: c, iconBlob: i || undefined, isSubscribed: true }); setConfig(moveVideosToChannel(v, n)); }} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} isUploadLimitReached={isUploadLimitReached} enableGradient={enableGradient} density={config.uiDensity} onVideoSelect={handleVideoSelect} /> :
                  <>

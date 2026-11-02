@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AppConfig, ChannelConfig, Playlist, VideoIndexRecord, VideoTag } from '../types';
+import { AppConfig, ChannelConfig, Playlist, SmartChannel, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -10,6 +10,7 @@ const DIR_HANDLE_KEY = 'localtube_dir_handle'; // Legacy single handle
 const PLAYLISTS_KEY = 'localtube_playlists';
 const LIBRARY_INDEX_KEY = 'localtube_library_index';
 const VIDEO_TAGS_KEY = 'localtube_video_tags';
+const SMART_CHANNELS_KEY = 'localtube_smart_channels';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -132,6 +133,21 @@ export const saveVideoTags = async (tags: VideoTag[]) => {
     ];
   });
   await set(VIDEO_TAGS_KEY, current);
+};
+
+export const loadSmartChannels = (): SmartChannel[] => {
+  try {
+    const value = localStorage.getItem(SMART_CHANNELS_KEY);
+    const parsed: unknown = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Failed to load smart channels.', error);
+    return [];
+  }
+};
+
+export const saveSmartChannels = (channels: SmartChannel[]) => {
+  localStorage.setItem(SMART_CHANNELS_KEY, JSON.stringify(channels));
 };
 
 // --- Config Management (LocalStorage) ---

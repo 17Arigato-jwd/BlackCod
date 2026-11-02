@@ -126,7 +126,16 @@ export interface SmartChannel {
   sort: 'recent' | 'name' | 'relevance';
 }
 
-export type ViewState = 'home' | 'all_videos' | 'history' | 'liked' | 'library' | 'playlists' | 'channel' | 'folders' | 'settings';
+declare global {
+  interface Window {
+    blackcod?: {
+      version: string;
+      runtime: 'electron';
+    };
+  }
+}
+
+export type ViewState = 'home' | 'all_videos' | 'history' | 'liked' | 'library' | 'playlists' | 'smart_channels' | 'channel' | 'folders' | 'settings';
 
 export interface Channel {
   name: string;
