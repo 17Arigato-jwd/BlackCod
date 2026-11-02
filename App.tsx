@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
-import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord, SmartChannel } from './types';
+import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord, SmartChannel, VideoAnalysis } from './types';
 import { getVideoId, isVideoFile } from './utils/videoUtils';
 import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
 import { deriveLocalTags } from './utils/tagUtils';
@@ -48,8 +48,10 @@ import {
   loadLibraryIndex,
   reconcileLibraryIndex,
   loadSmartChannels,
-  saveSmartChannels
+  saveSmartChannels,
+  loadVideoAnalyses
 } from './utils/storageUtils';
+import { transcriptText } from './utils/analysisUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
 const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
@@ -124,6 +126,7 @@ const App: React.FC = () => {
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
   const [playlists, setPlaylists] = useState<Playlist[]>(() => loadPlaylists());
   const [videoTags, setVideoTags] = useState<Record<string, VideoTag[]>>({});
+  const [videoAnalyses, setVideoAnalyses] = useState<Record<string, VideoAnalysis>>({});
   const [smartChannels, setSmartChannels] = useState<SmartChannel[]>(() => loadSmartChannels());
   const libraryIndexRef = useRef<Record<string, VideoIndexRecord>>({});
   const [needsPermission, setNeedsPermission] = useState(false);
@@ -202,6 +205,7 @@ const App: React.FC = () => {
     const init = async () => {
       try {
         setVideoTags(await loadVideoTags());
+        setVideoAnalyses(await loadVideoAnalyses());
         libraryIndexRef.current = await loadLibraryIndex();
         if (smartChannels.length === 0) {
           const defaults: SmartChannel[] = [
@@ -630,7 +634,8 @@ const App: React.FC = () => {
         video.title.toLowerCase().includes(query)
         || video.file.name.toLowerCase().includes(query)
         || video.channelName.toLowerCase().includes(query)
-        || (videoTags[video.id] || []).some(tag => tag.tag.includes(query))
+        || (videoTags[video.id] || []).some(tag => tag.tag.toLowerCase().includes(query))
+        || transcriptText(videoAnalyses[video.id]?.transcript || []).toLowerCase().includes(query)
       );
     }
     const sortMode = config.defaultSort || 'date';
@@ -651,7 +656,7 @@ const App: React.FC = () => {
       case 'channel': return filtered.filter(v => v.channelName === selectedChannel);
       default: return filtered;
     }
-  }, [videos, videoTags, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
+  }, [videos, videoTags, videoAnalyses, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
 
   const visibleVideos = useMemo(
     () => displayedVideos.slice(0, visibleCount),
