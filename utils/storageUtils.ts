@@ -484,10 +484,22 @@ export async function verifyPermission(fileHandle: FileSystemHandle, readWrite =
   return false;
 }
 
-export async function getFilesRecursively(entry: FileSystemDirectoryHandle, path = ''): Promise<File[]> {
+export interface DirectoryScanOptions {
+  signal?: AbortSignal;
+  onFile?: (path: string) => void;
+}
+
+export async function getFilesRecursively(
+  entry: FileSystemDirectoryHandle,
+  path = '',
+  options: DirectoryScanOptions = {}
+): Promise<File[]> {
   const files: File[] = [];
   // @ts-ignore
   for await (const handle of entry.values()) {
+    if (options.signal?.aborted) {
+      throw new DOMException('Directory scan cancelled.', 'AbortError');
+    }
     try {
         if (handle.kind === 'file') {
           const fileHandle = handle as FileSystemFileHandle;
@@ -496,12 +508,13 @@ export async function getFilesRecursively(entry: FileSystemDirectoryHandle, path
             value: path + file.name,
             writable: false,
           });
+          options.onFile?.(path + file.name);
           if (isVideoFile(file)) {
             files.push(file);
           }
         } else if (handle.kind === 'directory') {
           const dirHandle = handle as FileSystemDirectoryHandle;
-          const subFiles = await getFilesRecursively(dirHandle, path + handle.name + '/');
+          const subFiles = await getFilesRecursively(dirHandle, path + handle.name + '/', options);
           files.push(...subFiles);
         }
     } catch (err) {
