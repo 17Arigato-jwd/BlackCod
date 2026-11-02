@@ -91,6 +91,12 @@ export const removeVideoFromPlaylist = (playlistId: string, videoId: string): Pl
   return playlists;
 };
 
+export const deletePlaylist = (playlistId: string): Playlist[] => {
+  const playlists = loadPlaylists().filter(playlist => playlist.id !== playlistId);
+  savePlaylists(playlists);
+  return playlists;
+};
+
 export const loadLibraryIndex = async (): Promise<Record<string, VideoIndexRecord>> =>
   (await get(LIBRARY_INDEX_KEY)) || {};
 

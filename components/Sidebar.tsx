@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, FolderOpen, Clock, ThumbsUp, Library, Settings, Loader2, Film } from 'lucide-react';
+import { Home, FolderOpen, Clock, ThumbsUp, Library, Settings, Loader2, Film, ListVideo } from 'lucide-react';
 import { ViewState, UploadJob } from '../types';
 
 interface SidebarProps {
@@ -20,6 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, currentView, onNavigat
     { icon: Library, label: 'Library', id: 'library' as ViewState },
     { icon: Clock, label: 'History', id: 'history' as ViewState },
     { icon: ThumbsUp, label: 'Liked Videos', id: 'liked' as ViewState },
+    { icon: ListVideo, label: 'Playlists', id: 'playlists' as ViewState },
   ];
 
   // Styles

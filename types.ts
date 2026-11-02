@@ -126,7 +126,7 @@ export interface SmartChannel {
   sort: 'recent' | 'name' | 'relevance';
 }
 
-export type ViewState = 'home' | 'all_videos' | 'history' | 'liked' | 'library' | 'channel' | 'folders' | 'settings';
+export type ViewState = 'home' | 'all_videos' | 'history' | 'liked' | 'library' | 'playlists' | 'channel' | 'folders' | 'settings';
 
 export interface Channel {
   name: string;
