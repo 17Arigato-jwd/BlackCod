@@ -38,7 +38,8 @@ import {
   importChannelData,
   saveVideoProgress,
   loadPlaylists,
-  addVideoToPlaylist
+  addVideoToPlaylist,
+  createPlaylist
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
@@ -555,6 +556,12 @@ const App: React.FC = () => {
     addNotification('Added video to playlist.');
   };
 
+  const handleCreatePlaylist = (name: string, videoId: string) => {
+    const playlist = createPlaylist(name);
+    setPlaylists(addVideoToPlaylist(playlist.id, videoId));
+    addNotification(`Created playlist "${playlist.name}".`);
+  };
+
   const handleUpdateChannel = async (id: string, updates: Partial<ChannelConfig>) => {
     const newMap = await saveChannel(id, updates);
     const processed: Record<string, ChannelConfig> = {};
@@ -701,7 +708,7 @@ const App: React.FC = () => {
           <Sidebar isOpen={isSidebarOpen && !selectedVideo} currentView={viewState} onNavigate={handleNavigate} uploadQueue={uploadQueue} enableGradient={enableGradient} density={config.uiDensity} />
           <main className={`flex-1 transition-all duration-200 h-[calc(100vh-56px)] overflow-y-auto ${(isSidebarOpen && !selectedVideo) ? 'sm:ml-60' : 'sm:ml-[72px]'}`}>
             {selectedVideo && !isMiniPlayer ? (
-              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} onVideoSelect={handleVideoSelect} playlists={playlists} onAddToPlaylist={(playlistId) => handleAddToPlaylist(selectedVideo.id, playlistId)} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={handlePlaybackTimeUpdate} />
+              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} onVideoSelect={handleVideoSelect} playlists={playlists} onAddToPlaylist={(playlistId) => handleAddToPlaylist(selectedVideo.id, playlistId)} onCreatePlaylist={(name) => handleCreatePlaylist(name, selectedVideo.id)} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={handlePlaybackTimeUpdate} />
             ) : (
               <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading view...</div>}>
               <div>

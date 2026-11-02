@@ -26,10 +26,11 @@ interface VideoPlayerProps {
   startTime?: number;
   playlists: Playlist[];
   onAddToPlaylist: (playlistId: string) => void;
+  onCreatePlaylist: (name: string) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0
+  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -229,12 +230,18 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                    onChange={(event) => {
                      const playlistId = event.target.value;
                      setSelectedPlaylist('');
-                     if (playlistId) onAddToPlaylist(playlistId);
+                     if (playlistId === '__create__') {
+                       const name = window.prompt('New playlist name');
+                       if (name?.trim()) onCreatePlaylist(name);
+                     } else if (playlistId) {
+                       onAddToPlaylist(playlistId);
+                     }
                    }}
                    className="max-w-32 bg-transparent text-sm font-medium text-white outline-none"
                    aria-label="Add video to playlist"
                  >
                    <option value="" className="bg-[#181818]">Add to playlist</option>
+                   <option value="__create__" className="bg-[#181818]">Create new playlist...</option>
                    {playlists.map(playlist => (
                      <option key={playlist.id} value={playlist.id} className="bg-[#181818]">
                        {playlist.name}
