@@ -15,7 +15,8 @@ export const createLocalVideo = async (
   file: File,
   config: AppConfig,
   sourceName: string,
-  forceChannelName?: string
+  forceChannelName?: string,
+  indexedRecord?: VideoIndexRecord
 ): Promise<LocalVideo | null> => {
   const id = getVideoId(file, sourceName);
   if (config.hiddenVideoIds.includes(id)) return null;
@@ -24,7 +25,9 @@ export const createLocalVideo = async (
     || forceChannelName
     || getDefaultChannelName(file, 'Uncategorized');
   const customThumbnail = await getCustomThumbnail(id);
-  const metadata = await extractMetadata(file);
+  const metadata = indexedRecord
+    ? { thumbnailUrl: null, duration: indexedRecord.duration || 0 }
+    : await extractMetadata(file);
 
   return {
     id,

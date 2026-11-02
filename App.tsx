@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
-import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag } from './types';
+import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag, VideoIndexRecord } from './types';
 import { isVideoFile } from './utils/videoUtils';
 import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
 import { deriveLocalTags } from './utils/tagUtils';
@@ -44,7 +44,8 @@ import {
   deletePlaylist,
   saveLibraryIndex,
   saveVideoTags,
-  loadVideoTags
+  loadVideoTags,
+  loadLibraryIndex
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
@@ -119,6 +120,7 @@ const App: React.FC = () => {
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
   const [playlists, setPlaylists] = useState<Playlist[]>(() => loadPlaylists());
   const [videoTags, setVideoTags] = useState<Record<string, VideoTag[]>>({});
+  const libraryIndexRef = useRef<Record<string, VideoIndexRecord>>({});
   const [needsPermission, setNeedsPermission] = useState(false);
   const [skippedIntro, setSkippedIntro] = useState(false);
   
@@ -195,6 +197,7 @@ const App: React.FC = () => {
     const init = async () => {
       try {
         setVideoTags(await loadVideoTags());
+        libraryIndexRef.current = await loadLibraryIndex();
         const loadedChannels = await loadChannels();
         const processed: Record<string, ChannelConfig> = {};
         for (const [key, val] of Object.entries(loadedChannels)) {
@@ -476,7 +479,8 @@ const App: React.FC = () => {
     
     for (let i = 0; i < videoFiles.length; i++) {
       const file = videoFiles[i];
-      const video = await createLocalVideo(file, config, sourceName, forceChannelName);
+      const id = `${sourceName}/${file.webkitRelativePath || file.name}-${file.size}-${file.lastModified}`;
+      const video = await createLocalVideo(file, config, sourceName, forceChannelName, libraryIndexRef.current[id]);
       if (video) processedVideos.push(video);
 
       if (i === videoFiles.length - 1 || i - lastProgressUpdate >= 10) {
@@ -496,7 +500,11 @@ const App: React.FC = () => {
        });
        return [...prev.filter(v => !newIds.has(v.id)), ...processedVideos];
     });
-    await saveLibraryIndex(processedVideos.map(video => toVideoIndexRecord(video, sourceName)));
+    const indexRecords = processedVideos.map(video => toVideoIndexRecord(video, sourceName));
+    await saveLibraryIndex(indexRecords);
+    indexRecords.forEach(record => {
+      libraryIndexRef.current[record.id] = record;
+    });
     const generatedTags = processedVideos.flatMap(deriveLocalTags);
     await saveVideoTags(generatedTags);
     setVideoTags(previous => {
