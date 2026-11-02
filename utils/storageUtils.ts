@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AppConfig, ChannelConfig, Playlist, SmartChannel, VideoIndexRecord, VideoTag } from '../types';
+import { AnalysisJob, AppConfig, ChannelConfig, Playlist, SmartChannel, VideoAnalysis, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -11,6 +11,8 @@ const PLAYLISTS_KEY = 'localtube_playlists';
 const LIBRARY_INDEX_KEY = 'localtube_library_index';
 const VIDEO_TAGS_KEY = 'localtube_video_tags';
 const SMART_CHANNELS_KEY = 'localtube_smart_channels';
+const ANALYSIS_JOBS_KEY = 'localtube_analysis_jobs';
+const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -148,6 +150,45 @@ export const loadSmartChannels = (): SmartChannel[] => {
 
 export const saveSmartChannels = (channels: SmartChannel[]) => {
   localStorage.setItem(SMART_CHANNELS_KEY, JSON.stringify(channels));
+};
+
+export const loadAnalysisJobs = async (): Promise<AnalysisJob[]> =>
+  (await get<AnalysisJob[]>(ANALYSIS_JOBS_KEY)) || [];
+
+export const saveAnalysisJobs = async (jobs: AnalysisJob[]) => {
+  await set(ANALYSIS_JOBS_KEY, jobs);
+};
+
+export const enqueueAnalysisJob = async (
+  videoId: string,
+  kind: AnalysisJob['kind'],
+  priority = 0
+): Promise<AnalysisJob> => {
+  const jobs = await loadAnalysisJobs();
+  const existing = jobs.find(job => job.videoId === videoId && job.kind === kind && (job.status === 'queued' || job.status === 'running'));
+  if (existing) return existing;
+  const now = Date.now();
+  const job: AnalysisJob = {
+    id: crypto.randomUUID(),
+    videoId,
+    kind,
+    priority,
+    status: 'queued',
+    attempts: 0,
+    createdAt: now,
+    updatedAt: now
+  };
+  await saveAnalysisJobs([...jobs, job]);
+  return job;
+};
+
+export const loadVideoAnalyses = async (): Promise<Record<string, VideoAnalysis>> =>
+  (await get<Record<string, VideoAnalysis>>(VIDEO_ANALYSIS_KEY)) || {};
+
+export const saveVideoAnalysis = async (analysis: VideoAnalysis) => {
+  const analyses = await loadVideoAnalyses();
+  analyses[analysis.videoId] = analysis;
+  await set(VIDEO_ANALYSIS_KEY, analyses);
 };
 
 // --- Config Management (LocalStorage) ---

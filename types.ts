@@ -93,6 +93,27 @@ export interface VideoAnalysis {
   summary: string | null;
   analyzedAt: number | null;
   error: string | null;
+  transcript: TranscriptSegment[];
+  modelId: string | null;
+}
+
+export interface TranscriptSegment {
+  start: number;
+  end: number;
+  text: string;
+  confidence: number;
+}
+
+export interface AnalysisJob {
+  id: string;
+  videoId: string;
+  kind: 'transcription' | 'vision' | 'audio';
+  status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled';
+  priority: number;
+  attempts: number;
+  createdAt: number;
+  updatedAt: number;
+  error?: string;
 }
 
 export interface VideoTag {
