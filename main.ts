@@ -1,4 +1,4 @@
-import { app, BrowserWindow, session } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, session, shell } from "electron";
 import path from "path";
 
 function createWindow() {
@@ -24,10 +24,20 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('blackcod:select-directory', async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
+    return result.canceled ? null : result.filePaths[0] || null;
+  });
+  ipcMain.handle('blackcod:reveal-path', async (_event, targetPath: unknown) => {
+    if (typeof targetPath !== 'string' || !targetPath.trim()) return false;
+    const result = await shell.openPath(targetPath);
+    if (result) throw new Error(result);
+    return true;
+  });
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const policy = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com",
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "media-src 'self' blob: file:",

@@ -1,3 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --yt-black: #0f0f0f;
+  --yt-dark: #272727;
+  --yt-red: #ff0000;
+  --yt-brand: #ff0000;
+}
+
 * {
   box-sizing: border-box;
 }

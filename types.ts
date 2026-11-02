@@ -149,10 +149,7 @@ export interface SmartChannel {
 
 declare global {
   interface Window {
-    blackcod?: {
-      version: string;
-      runtime: 'electron';
-    };
+    blackcod?: import('./ipcContracts').BlackCodApi;
   }
 }
 
