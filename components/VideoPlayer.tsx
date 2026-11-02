@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LocalVideo, ChannelConfig, Playlist } from '../types';
+import { LocalVideo, ChannelConfig, Playlist, VideoTag } from '../types';
 import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
@@ -27,10 +27,11 @@ interface VideoPlayerProps {
   playlists: Playlist[];
   onAddToPlaylist: (playlistId: string) => void;
   onCreatePlaylist: (name: string) => void;
+  videoTags: VideoTag[];
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist
+  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -265,6 +266,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                File Size: {formatBytes(video.size)}<br/>
                <span className="text-yt-gray group-hover:text-white transition-colors">Show more</span>
              </p>
+             {videoTags.length > 0 && (
+               <div className="mt-3 flex flex-wrap gap-2">
+                 {videoTags.slice(0, 12).map(tag => (
+                   <span key={`${tag.source}-${tag.tag}`} className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-gray-200">
+                     #{tag.tag}
+                   </span>
+                 ))}
+               </div>
+             )}
           </div>
           
           {/* Rating Section (Replaces Comments) */}

@@ -1,7 +1,8 @@
 import React, { lazy, Suspense, useState, useRef, useEffect, useMemo } from 'react';
-import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist } from './types';
+import { LocalVideo, ViewState, AppConfig, Channel, ChannelConfig, UploadJob, Playlist, VideoTag } from './types';
 import { isVideoFile } from './utils/videoUtils';
 import { createLocalVideo, toVideoIndexRecord } from './utils/libraryUtils';
+import { deriveLocalTags } from './utils/tagUtils';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { VideoGrid } from './components/VideoGrid';
@@ -40,7 +41,9 @@ import {
   loadPlaylists,
   addVideoToPlaylist,
   createPlaylist,
-  saveLibraryIndex
+  saveLibraryIndex,
+  saveVideoTags,
+  loadVideoTags
 } from './utils/storageUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
@@ -113,6 +116,7 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<AppConfig>(loadConfig());
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
   const [playlists, setPlaylists] = useState<Playlist[]>(() => loadPlaylists());
+  const [videoTags, setVideoTags] = useState<Record<string, VideoTag[]>>({});
   const [needsPermission, setNeedsPermission] = useState(false);
   const [skippedIntro, setSkippedIntro] = useState(false);
   
@@ -188,6 +192,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
+        setVideoTags(await loadVideoTags());
         const loadedChannels = await loadChannels();
         const processed: Record<string, ChannelConfig> = {};
         for (const [key, val] of Object.entries(loadedChannels)) {
@@ -490,6 +495,18 @@ const App: React.FC = () => {
        return [...prev.filter(v => !newIds.has(v.id)), ...processedVideos];
     });
     await saveLibraryIndex(processedVideos.map(video => toVideoIndexRecord(video, sourceName)));
+    const generatedTags = processedVideos.flatMap(deriveLocalTags);
+    await saveVideoTags(generatedTags);
+    setVideoTags(previous => {
+      const next = { ...previous };
+      generatedTags.forEach(tag => {
+        next[tag.videoId] = [
+          ...(next[tag.videoId] || []).filter(item => item.tag !== tag.tag || item.source !== tag.source),
+          tag
+        ];
+      });
+      return next;
+    });
     setUploadQueue(prev => prev.filter(job => job.id !== jobId));
   };
 
@@ -710,7 +727,7 @@ const App: React.FC = () => {
           <Sidebar isOpen={isSidebarOpen && !selectedVideo} currentView={viewState} onNavigate={handleNavigate} uploadQueue={uploadQueue} enableGradient={enableGradient} density={config.uiDensity} />
           <main className={`flex-1 transition-all duration-200 h-[calc(100vh-56px)] overflow-y-auto ${(isSidebarOpen && !selectedVideo) ? 'sm:ml-60' : 'sm:ml-[72px]'}`}>
             {selectedVideo && !isMiniPlayer ? (
-              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} onVideoSelect={handleVideoSelect} playlists={playlists} onAddToPlaylist={(playlistId) => handleAddToPlaylist(selectedVideo.id, playlistId)} onCreatePlaylist={(name) => handleCreatePlaylist(name, selectedVideo.id)} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={handlePlaybackTimeUpdate} />
+              <VideoPlayer video={selectedVideo} channelConfig={channelConfigs[selectedVideo.channelName]} suggestedVideos={videos} playlists={playlists} videoTags={videoTags[selectedVideo.id] || []} onVideoSelect={handleVideoSelect} onAddToPlaylist={(playlistId) => handleAddToPlaylist(selectedVideo.id, playlistId)} onCreatePlaylist={(name) => handleCreatePlaylist(name, selectedVideo.id)} isLiked={config.likedVideoIds.includes(selectedVideo.id)} rating={config.ratings[selectedVideo.id] || 0} onToggleLike={(id) => setConfig(toggleLike(id, !config.likedVideoIds.includes(id)))} onRate={(id, r) => setConfig(rateVideo(id, r))} onUpdateThumbnail={(id, url) => { saveCustomThumbnail(id, url); setVideos(prev => prev.map(v => v.id === id ? { ...v, thumbnailUrl: url } : v)); }} onUpdateVideo={(id, u) => setVideos(prev => prev.map(v => v.id === id ? { ...v, ...u } : v))} onChannelClick={(n) => { setSelectedChannel(n); setViewState('channel'); }} onRemoveVideo={(id) => { setConfig(hideVideo(id)); setVideos(v => v.filter(x => x.id !== id)); if (selectedVideo?.id === id) setSelectedVideo(null); }} onRenameVideo={(id, t) => { setConfig(renameVideo(id, t)); setVideos(v => v.map(x => x.id === id ? { ...x, title: t } : x)); }} onToggleMiniPlayer={() => setIsMiniPlayer(true)} enableGradient={enableGradient} autoplay={config.autoplay} startTime={playbackTimeRef.current} onTimeUpdate={handlePlaybackTimeUpdate} />
             ) : (
               <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading view...</div>}>
               <div>
