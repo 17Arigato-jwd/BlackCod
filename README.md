@@ -36,6 +36,7 @@ A high-performance desktop application designed to organize, view, and manage yo
 * **YouTube-style offline features:** Home recommendations, playlists, a playback queue, autoplay, smart chapters, transcript search, and local captions.
 * **Explainable Smart Channels:** Build local channels from tags, folders, titles, ratings, languages, subtitles, and transcript content.
 * **Optional local analysis:** Register external model-pack descriptors for future transcription, vision, and audio adapters. Models are not bundled and analysis never requires a network connection.
+* **Versioned local data:** Configuration records are migrated into a versioned envelope so future releases can evolve storage safely.
 
 ---
 
@@ -146,6 +147,7 @@ BlackCod/
 * [ ] Add a concrete optional Whisper-compatible local inference runtime.
 * [ ] Move long-running indexing fully into a native background service.
 * [ ] Add broader packaging, performance, and end-to-end coverage.
+* [ ] Add migrations for IndexedDB analysis, playlist, and library records.
 
 ---
 

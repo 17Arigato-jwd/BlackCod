@@ -16,6 +16,31 @@ const ANALYSIS_JOBS_KEY = 'localtube_analysis_jobs';
 const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
 const MODEL_PACKS_KEY = 'localtube_model_packs';
 const PLAY_QUEUE_KEY = 'localtube_play_queue';
+export const STORAGE_SCHEMA_VERSION = 2;
+
+interface ConfigEnvelope {
+  schemaVersion: number;
+  config: Partial<AppConfig>;
+}
+
+export const migratePersistedConfig = (value: unknown): ConfigEnvelope => {
+  const raw = value && typeof value === 'object' && 'config' in value
+    ? value as { config?: unknown }
+    : { config: value };
+  const config = raw.config && typeof raw.config === 'object'
+    ? raw.config as Partial<AppConfig>
+    : {};
+  return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    config: {
+      ...defaultConfig,
+      ...config,
+      startupFolderNames: Array.isArray(config.startupFolderNames)
+        ? config.startupFolderNames
+        : defaultConfig.startupFolderNames
+    }
+  };
+};
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -364,7 +389,8 @@ export const loadConfig = (): AppConfig => {
   try {
     const stored = localStorage.getItem(CONFIG_KEY);
     if (stored) {
-      const config = normalizeConfig(JSON.parse(stored));
+      const parsed: unknown = JSON.parse(stored);
+      const config = normalizeConfig(migratePersistedConfig(parsed).config);
       saveConfig(config);
       return config;
     }
@@ -375,7 +401,11 @@ export const loadConfig = (): AppConfig => {
 };
 
 export const saveConfig = (config: AppConfig) => {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  const envelope: ConfigEnvelope = {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    config
+  };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(envelope));
 };
 
 export const toggleLike = (videoId: string, isLiked: boolean): AppConfig => {
