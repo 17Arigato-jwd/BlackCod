@@ -34,6 +34,7 @@ export interface VideoIndexRecord {
   title: string;
   status: 'ready' | 'missing' | 'error';
   indexedAt: number;
+  nativePath?: string;
 }
 
 export interface VideoMetadata {

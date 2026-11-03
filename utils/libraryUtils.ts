@@ -1,4 +1,5 @@
 import { AppConfig, LocalVideo, VideoIndexRecord } from '../types';
+import { NativeFileDescriptor } from '../ipcContracts';
 import { extractMetadata, getVideoId } from './videoUtils';
 import { getCustomThumbnail } from './storageUtils';
 
@@ -56,3 +57,22 @@ export const toVideoIndexRecord = (
   status: 'ready',
   indexedAt: Date.now()
 });
+
+export const nativeDescriptorToIndexRecord = (
+  descriptor: NativeFileDescriptor,
+  libraryId: string
+): VideoIndexRecord => {
+  const fileName = descriptor.relativePath.split(/[\\/]/).pop() || descriptor.relativePath;
+  return {
+    id: `${libraryId}/${descriptor.relativePath}-${descriptor.size}-${descriptor.lastModified}`,
+    libraryId,
+    path: descriptor.relativePath,
+    size: descriptor.size,
+    modifiedTime: descriptor.lastModified,
+    duration: null,
+    title: fileName.replace(/\.[^/.]+$/, ''),
+    status: 'ready',
+    indexedAt: Date.now(),
+    nativePath: descriptor.path
+  };
+};
