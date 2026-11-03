@@ -47,6 +47,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
   const [chapterTitle, setChapterTitle] = useState('');
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
 
   // Ref to track time for sync if needed, though mostly handled by CustomVideoPlayer props in App
   const lastTimeRef = useRef(0);
@@ -286,7 +287,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                    if (!chapterTitle.trim() || !onChaptersChange) return;
                    const start = lastTimeRef.current;
                    const nextChapter: VideoChapter = { id: crypto.randomUUID(), start, end: video.duration || start + 60, title: chapterTitle.trim(), source: 'manual', confidence: 1, modelId: null };
-                   onChaptersChange([...chapters.filter(chapter => chapter.source !== 'manual'), nextChapter].sort((a, b) => a.start - b.start));
+                   onChaptersChange([...chapters, nextChapter].sort((a, b) => a.start - b.start));
                    setChapterTitle('');
                  }} className="rounded bg-[var(--yt-brand)] px-3 py-2 text-sm font-medium text-white hover:brightness-110">Add at current time</button>
                </div>
@@ -294,8 +295,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                  {chapters.map(chapter => (
                    <div key={chapter.id} className="flex items-center gap-2 text-xs text-gray-300">
                      <span className="w-12 text-gray-500">{formatDuration(chapter.start)}</span>
-                     <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
+                     {editingChapterId === chapter.id ? (
+                       <input
+                         autoFocus
+                         defaultValue={chapter.title}
+                         onKeyDown={event => {
+                           if (event.key === 'Enter' && onChaptersChange) {
+                             const title = event.currentTarget.value.trim();
+                             if (title) onChaptersChange(chapters.map(item => item.id === chapter.id ? { ...item, title } : item));
+                             setEditingChapterId(null);
+                           }
+                           if (event.key === 'Escape') setEditingChapterId(null);
+                         }}
+                         className="min-w-0 flex-1 rounded bg-black/30 px-2 py-1 text-white outline-none ring-1 ring-white/20"
+                       />
+                     ) : (
+                       <button type="button" onClick={() => onChapterSelect?.(chapter)} className="min-w-0 flex-1 truncate text-left hover:text-white">{chapter.title}</button>
+                     )}
                      <span className="text-gray-500">{chapter.source}</span>
+                     {chapter.source === 'manual' && onChaptersChange && (
+                       <>
+                         <button type="button" onClick={() => setEditingChapterId(chapter.id)} className="text-gray-400 hover:text-white" title="Rename chapter"><Edit2 className="h-3 w-3" /></button>
+                         <button type="button" onClick={() => onChaptersChange(chapters.filter(item => item.id !== chapter.id))} className="text-gray-400 hover:text-red-300" title="Remove chapter"><X className="h-3 w-3" /></button>
+                       </>
+                     )}
                    </div>
                  ))}
                </div>
