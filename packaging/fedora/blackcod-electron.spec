@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Name:           blackcod-electron
 Version:        39.2.7
 Release:        1%{?dist}
@@ -21,12 +23,11 @@ unzip -q %{SOURCE0}
 
 %install
 install -d %{buildroot}%{_libexecdir}/blackcod-electron
-cp -a electron-v%{version}-linux-x64/. \
+cp -a . \
   %{buildroot}%{_libexecdir}/blackcod-electron/
 
 %files
-%license %{_libexecdir}/blackcod-electron/LICENSE
-%license %{_libexecdir}/blackcod-electron/LICENSES.chromium.html
+%license LICENSE LICENSES.chromium.html
 %{_libexecdir}/blackcod-electron/
 
 %changelog
