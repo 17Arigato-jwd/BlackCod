@@ -52,4 +52,20 @@ describe('video query utilities', () => {
 
     expect(result.map(item => item.id)).toEqual(['second', 'first']);
   });
+
+  it('keeps a large local search within the performance budget', () => {
+    const videos = Array.from({ length: 5000 }, (_, index) =>
+      video(`video-${index}`, index === 4999 ? 'Target lesson' : `Lesson ${index}`, index)
+    );
+    const startedAt = performance.now();
+    const result = queryVideos(videos, {}, {}, {
+      searchTerm: 'target lesson',
+      viewState: 'all',
+      history: [],
+      likedVideoIds: []
+    });
+
+    expect(result).toHaveLength(1);
+    expect(performance.now() - startedAt).toBeLessThan(500);
+  });
 });
