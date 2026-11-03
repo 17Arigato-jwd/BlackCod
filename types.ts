@@ -155,7 +155,7 @@ export interface Playlist {
 }
 
 export interface SmartChannelRule {
-  field: 'tag' | 'title' | 'duration' | 'watched' | 'liked' | 'folder';
+  field: 'tag' | 'title' | 'transcript' | 'language' | 'hasSubtitles' | 'duration' | 'watched' | 'liked' | 'rating' | 'folder';
   operator: 'contains' | 'equals' | 'greaterThan' | 'lessThan';
   value: string | number | boolean;
 }
