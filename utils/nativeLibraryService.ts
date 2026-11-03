@@ -32,3 +32,11 @@ export const scanNativeLibrary = async (
 
 export const cancelNativeLibraryScan = (api: BlackCodApi, scanId: string): Promise<boolean> =>
   api.cancelDirectoryScan(scanId);
+
+export const resolveNativeMediaUrl = async (
+  api: BlackCodApi,
+  record: VideoIndexRecord
+): Promise<string | null> => {
+  if (!record.nativePath) return null;
+  return api.getMediaUrl(record.nativePath);
+};

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BlackCodApi } from '../ipcContracts';
-import { cancelNativeLibraryScan, scanNativeLibrary } from './nativeLibraryService';
+import { cancelNativeLibraryScan, resolveNativeMediaUrl, scanNativeLibrary } from './nativeLibraryService';
 
 const createApi = (): BlackCodApi => ({
   version: '1.1.4',
@@ -39,5 +39,25 @@ describe('native library service', () => {
     const api = createApi();
     await expect(cancelNativeLibraryScan(api, 'scan-1')).resolves.toBe(true);
     expect(api.cancelDirectoryScan).toHaveBeenCalledWith('scan-1');
+  });
+
+  it('resolves only records that carry a native path', async () => {
+    const api = createApi();
+    const record = {
+      id: 'video-1',
+      libraryId: 'Library',
+      path: 'video.mp4',
+      size: 10,
+      modifiedTime: 20,
+      duration: null,
+      title: 'video',
+      status: 'ready' as const,
+      indexedAt: 20,
+      nativePath: '/library/video.mp4'
+    };
+    vi.mocked(api.getMediaUrl).mockResolvedValue('file:///library/video.mp4');
+
+    await expect(resolveNativeMediaUrl(api, record)).resolves.toBe('file:///library/video.mp4');
+    await expect(resolveNativeMediaUrl(api, { ...record, nativePath: undefined })).resolves.toBeNull();
   });
 });
