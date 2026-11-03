@@ -135,6 +135,14 @@ export interface ModelPack {
   sizeBytes: number;
   installedAt: number;
   enabled: boolean;
+  adapterId?: string;
+  resourceBudget?: AnalysisResourceBudget;
+}
+
+export interface AnalysisResourceBudget {
+  maxDurationMs: number;
+  maxMemoryMb: number;
+  maxThreads: number;
 }
 
 export interface VideoTag {
