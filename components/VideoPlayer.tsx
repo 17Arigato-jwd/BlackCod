@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { LocalVideo, ChannelConfig, Playlist, VideoTag, TranscriptSegment } from '../types';
-import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus, X } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
 import { CustomVideoPlayer } from './CustomVideoPlayer';
@@ -24,6 +24,9 @@ interface VideoPlayerProps {
   onEnded?: () => void;
   onQueueVideo?: (video: LocalVideo) => void;
   queueLength?: number;
+  queuedVideos?: LocalVideo[];
+  onRemoveQueuedVideo?: (videoId: string) => void;
+  onClearQueue?: () => void;
   enableGradient?: boolean;
   autoplay?: boolean;
   startTime?: number;
@@ -35,7 +38,7 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos,       onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
+  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -309,6 +312,23 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Suggested Videos Column */}
       <div className="w-full lg:w-[350px] xl:w-[400px] flex flex-col gap-2">
         <h3 className="mb-2 text-lg font-bold">Up Next {queueLength > 0 && <span className="text-sm font-normal text-gray-400">· {queueLength} queued</span>}</h3>
+        {queuedVideos.length > 0 && (
+          <div className="mb-3 rounded-xl border border-blue-400/20 bg-blue-400/5 p-3">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-blue-300">
+              <span>Play next queue</span>
+              {onClearQueue && <button type="button" onClick={onClearQueue} className="text-gray-400 hover:text-white">Clear</button>}
+            </div>
+            <div className="space-y-1">
+              {queuedVideos.map((queuedVideo, index) => (
+                <div key={queuedVideo.id} className="flex items-center gap-2 text-sm text-gray-200">
+                  <span className="w-4 text-gray-500">{index + 1}.</span>
+                  <button type="button" onClick={() => onVideoSelect(queuedVideo)} className="min-w-0 flex-1 truncate text-left hover:text-blue-300">{queuedVideo.title}</button>
+                  {onRemoveQueuedVideo && <button type="button" onClick={() => onRemoveQueuedVideo(queuedVideo.id)} className="rounded p-1 text-gray-500 hover:bg-white/10 hover:text-red-300" title="Remove from queue"><X className="h-3.5 w-3.5" /></button>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {suggestedVideos.filter(v => v.id !== video.id).map(suggestion => (
           <div 
             key={suggestion.id} 
