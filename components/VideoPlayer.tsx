@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LocalVideo, ChannelConfig, Playlist, VideoTag, TranscriptSegment } from '../types';
+import { LocalVideo, ChannelConfig, Playlist, VideoChapter, VideoTag, TranscriptSegment } from '../types';
 import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus, X } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
@@ -35,10 +35,12 @@ interface VideoPlayerProps {
   onCreatePlaylist: (name: string) => void;
   videoTags: VideoTag[];
   transcript?: TranscriptSegment[];
+  chapters?: VideoChapter[];
+  onChapterSelect?: (chapter: VideoChapter) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
+  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = [], chapters = [], onChapterSelect
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -159,6 +161,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             startTime={startTime}
             onLoadedMetadata={handleLoadedMetadata}
             transcript={transcript}
+            chapters={chapters}
+            onChapterSelect={onChapterSelect}
             enableGradient={enableGradient}
             title={video.title}
             onToggleMiniPlayer={onToggleMiniPlayer}

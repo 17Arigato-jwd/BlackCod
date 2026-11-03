@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { formatDuration } from '../utils/videoUtils';
 import { LoadingAnimation } from './LoadingAnimation';
-import { TranscriptSegment } from '../types';
+import { TranscriptSegment, VideoChapter } from '../types';
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -21,10 +21,12 @@ interface CustomVideoPlayerProps {
   title?: string;
   isMiniMode?: boolean;
   transcript?: TranscriptSegment[];
+  chapters?: VideoChapter[];
+  onChapterSelect?: (chapter: VideoChapter) => void;
 }
 
 export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ 
-  src, poster, autoPlay = false, startTime = 0, onEnded, onTimeUpdate, onLoadedMetadata, onToggleMiniPlayer, enableGradient = false, title, isMiniMode = false, transcript = []
+  src, poster, autoPlay = false, startTime = 0, onEnded, onTimeUpdate, onLoadedMetadata, onToggleMiniPlayer, enableGradient = false, title, isMiniMode = false, transcript = [], chapters = [], onChapterSelect
 }) => {
   const innerVideoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -499,6 +501,25 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                  <div className={`absolute right-[-6px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full ${enableGradient ? 'bg-white shadow-[0_0_10px_white]' : 'bg-[var(--yt-brand)]'} scale-0 group-hover/progress:scale-100 transition-transform`} />
                )}
              </div>
+             {chapters.length > 0 && !isMiniMode && (
+               <div className="mb-3 flex gap-1 overflow-x-auto">
+                 {chapters.map(chapter => (
+                   <button
+                     type="button"
+                     key={chapter.id}
+                     onClick={() => {
+                       if (innerVideoRef.current) innerVideoRef.current.currentTime = chapter.start;
+                       setCurrentTime(chapter.start);
+                       onChapterSelect?.(chapter);
+                     }}
+                     className={`min-w-0 flex-1 truncate rounded bg-white/10 px-2 py-1 text-[10px] text-gray-300 hover:bg-white/20 hover:text-white ${currentTime >= chapter.start && currentTime < chapter.end ? 'bg-[var(--yt-brand)]/50 text-white' : ''}`}
+                     title={`${chapter.title} (${formatDuration(chapter.start)})`}
+                   >
+                     {chapter.title}
+                   </button>
+                 ))}
+               </div>
+             )}
 
              {/* Input Range (Invisible but functional) */}
              <input 

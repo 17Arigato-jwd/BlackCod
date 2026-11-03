@@ -95,6 +95,17 @@ export interface VideoAnalysis {
   error: string | null;
   transcript: TranscriptSegment[];
   modelId: string | null;
+  chapters: VideoChapter[];
+}
+
+export interface VideoChapter {
+  id: string;
+  start: number;
+  end: number;
+  title: string;
+  source: 'manual' | 'subtitle' | 'transcript' | 'vision';
+  confidence: number;
+  modelId: string | null;
 }
 
 export interface TranscriptSegment {
