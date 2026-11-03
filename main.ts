@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell } from "electron";
 import path from "path";
+import { normalizeNativePath } from "./utils/nativePathUtils";
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -29,10 +30,11 @@ app.whenReady().then(() => {
     return result.canceled ? null : result.filePaths[0] || null;
   });
   ipcMain.handle('blackcod:reveal-path', async (_event, targetPath: unknown) => {
-    if (typeof targetPath !== 'string' || !targetPath.trim() || !path.isAbsolute(targetPath) || targetPath.includes('\0')) {
+    const safePath = normalizeNativePath(targetPath);
+    if (!safePath) {
       return false;
     }
-    const result = await shell.openPath(path.normalize(targetPath));
+    const result = await shell.openPath(safePath);
     if (result) throw new Error(result);
     return true;
   });
