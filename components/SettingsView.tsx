@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, RefreshCcw, Info, Fish, User, Database, FileText, ChevronRight, Eye, Code, Save, Camera, X, Download, Palette, Plus, Zap, Folder, HardDrive, AlertTriangle, Upload, HelpCircle, ArrowRight, Laptop, Film, Settings as SettingsIcon, LayoutGrid, PlayCircle, ArrowUpDown, FolderMinus, Loader2, Edit2, Check } from 'lucide-react';
-import { AppConfig, ChannelConfig, UserProfile } from '../types';
-import { loadChannels, saveConfig, downloadSystemFile, saveFileToFolder, defaultConfig, defaultChannelData, getVideoExportData, importVideoData, loadChannelHandles, removeChannelHandle, removeVideoChannelOverrides, moveVideosToChannel, importChannelData } from '../utils/storageUtils';
+import { AppConfig, ChannelConfig, ModelPack, UserProfile } from '../types';
+import { loadChannels, saveConfig, downloadSystemFile, saveFileToFolder, defaultConfig, defaultChannelData, getVideoExportData, importVideoData, loadChannelHandles, removeChannelHandle, removeVideoChannelOverrides, moveVideosToChannel, importChannelData, loadModelPacks, saveModelPack, setModelPackEnabled, removeModelPack } from '../utils/storageUtils';
 import { ThemePickerModal } from './ThemePickerModal';
 import { ImageCropperModal } from './ImageCropperModal';
 
@@ -40,6 +40,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onUpdateConf
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
+  const modelPackInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   // Data View State
@@ -51,6 +52,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onUpdateConf
   const [showBackupHelp, setShowBackupHelp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreProgress, setRestoreProgress] = useState(0);
+  const [modelPacks, setModelPacks] = useState<ModelPack[]>([]);
 
   // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -70,8 +72,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onUpdateConf
   useEffect(() => {
     loadChannels().then(setChannelData);
     loadChannelHandles().then(handles => setSavedHandles(Object.keys(handles)));
+    loadModelPacks().then(setModelPacks);
     setVideoData(getVideoExportData());
   }, [config]);
+
+  const handleModelPackImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== 'object') throw new Error('Model pack descriptor must be an object.');
+      const descriptor = parsed as Partial<ModelPack>;
+      if (
+        typeof descriptor.id !== 'string' ||
+        typeof descriptor.name !== 'string' ||
+        typeof descriptor.version !== 'string' ||
+        (descriptor.kind !== 'transcription' && descriptor.kind !== 'vision' && descriptor.kind !== 'audio') ||
+        typeof descriptor.sizeBytes !== 'number' ||
+        !Number.isFinite(descriptor.sizeBytes) ||
+        descriptor.sizeBytes < 0
+      ) {
+        throw new Error('Descriptor requires id, name, version, kind, and a valid sizeBytes value.');
+      }
+      const next = await saveModelPack({
+        id: descriptor.id,
+        name: descriptor.name,
+        version: descriptor.version,
+        kind: descriptor.kind,
+        sizeBytes: descriptor.sizeBytes,
+        installedAt: typeof descriptor.installedAt === 'number' ? descriptor.installedAt : Date.now(),
+        enabled: descriptor.enabled !== false
+      });
+      setModelPacks(next);
+    } catch (error) {
+      console.error('Failed to import model pack descriptor.', error);
+      window.alert(error instanceof Error ? error.message : 'The model pack descriptor could not be imported.');
+    }
+  };
+
+  const handleModelPackToggle = async (pack: ModelPack) => {
+    setModelPacks(await setModelPackEnabled(pack.id, !pack.enabled));
+  };
+
+  const handleModelPackRemove = async (pack: ModelPack) => {
+    setModelPacks(await removeModelPack(pack.id));
+  };
 
   const handleSaveGeneral = () => {
     const newConfig = {
@@ -529,6 +575,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onUpdateConf
 
   const renderDataTab = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className={`rounded-xl p-6 transition-colors duration-700 ${glassCard}`}>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              <Zap className="h-5 w-5 text-yellow-400" />
+              Offline ML model packs
+            </h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Register local model descriptors without bundling large models into BlackCod. Analysis stays disabled until a compatible pack is enabled.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => modelPackInputRef.current?.click()}
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${btn3d}`}
+          >
+            Import descriptor
+          </button>
+          <input
+            ref={modelPackInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleModelPackImport}
+            className="hidden"
+          />
+        </div>
+        {modelPacks.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-gray-500">
+            No model packs registered. A descriptor only records a locally installed pack; it does not download or execute a model.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {modelPacks.map(pack => (
+              <div key={pack.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                <div>
+                  <p className="font-medium text-white">{pack.name} <span className="text-xs text-gray-500">v{pack.version}</span></p>
+                  <p className="text-xs text-gray-500">{pack.kind} · {(pack.sizeBytes / 1024 / 1024).toFixed(1)} MB</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => handleModelPackToggle(pack)} className={`rounded px-3 py-1.5 text-xs ${pack.enabled ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-gray-400'}`}>
+                    {pack.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                  <button type="button" onClick={() => handleModelPackRemove(pack)} className="rounded px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       
       {/* Startup Folders Management */}
       <div className={`rounded-xl p-6 transition-colors duration-700 ${glassCard}`}>
