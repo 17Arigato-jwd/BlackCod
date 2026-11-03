@@ -56,9 +56,10 @@ import {
   savePlayQueue,
   updateVideoChapters
 } from './utils/storageUtils';
-import { chaptersFromTranscript, transcriptText } from './utils/analysisUtils';
+import { chaptersFromTranscript } from './utils/analysisUtils';
 import { chaptersFromSubtitle, parseSubtitleText, subtitleFileNameFor } from './utils/subtitleUtils';
 import { scanWithRetry } from './utils/libraryScanService';
+import { queryVideos } from './utils/videoQueryUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
 const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
@@ -700,35 +701,14 @@ const App: React.FC = () => {
   };
 
   const displayedVideos = useMemo(() => {
-    let filtered = [...videos];
-    if (searchTerm) {
-      const query = searchTerm.toLowerCase();
-      filtered = filtered.filter(video =>
-        video.title.toLowerCase().includes(query)
-        || video.file.name.toLowerCase().includes(query)
-        || video.channelName.toLowerCase().includes(query)
-        || (videoTags[video.id] || []).some(tag => tag.tag.toLowerCase().includes(query))
-        || transcriptText(videoAnalyses[video.id]?.transcript || []).toLowerCase().includes(query)
-      );
-    }
-    const sortMode = config.defaultSort || 'date';
-    filtered.sort((a, b) => {
-       if (sortMode === 'name') return a.title.localeCompare(b.title);
-       if (sortMode === 'size') return b.size - a.size;
-       return b.lastModified - a.lastModified;
+    return queryVideos(videos, videoTags, videoAnalyses, {
+      searchTerm,
+      sortMode: config.defaultSort,
+      viewState: viewState === 'history' || viewState === 'liked' || viewState === 'channel' ? viewState : 'all',
+      selectedChannel,
+      history: config.history,
+      likedVideoIds: config.likedVideoIds
     });
-
-    switch (viewState) {
-      case 'history': {
-        const videosById = new Map(videos.map(video => [video.id, video]));
-        return config.history
-          .map(id => videosById.get(id))
-          .filter((v): v is LocalVideo => !!v);
-      }
-      case 'liked': return filtered.filter(v => config.likedVideoIds.includes(v.id));
-      case 'channel': return filtered.filter(v => v.channelName === selectedChannel);
-      default: return filtered;
-    }
   }, [videos, videoTags, videoAnalyses, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
 
   const visibleVideos = useMemo(
