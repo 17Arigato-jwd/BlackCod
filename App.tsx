@@ -153,8 +153,6 @@ const App: React.FC = () => {
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  const [visibleCount, setVisibleCount] = useState(20);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const [currentTheme, setCurrentTheme] = useState(THEMES['default']);
 
@@ -711,23 +709,6 @@ const App: React.FC = () => {
     });
   }, [videos, videoTags, videoAnalyses, searchTerm, config.defaultSort, viewState, selectedChannel, config.history, config.likedVideoIds]);
 
-  const visibleVideos = useMemo(
-    () => displayedVideos.slice(0, visibleCount),
-    [displayedVideos, visibleCount]
-  );
-
-  useEffect(() => {
-    setVisibleCount(20);
-  }, [searchTerm, config.defaultSort, viewState, selectedChannel]);
-
-  const handleLoadMore = () => {
-    setIsLoadingMore(true);
-    window.setTimeout(() => {
-      setVisibleCount(count => count + 20);
-      setIsLoadingMore(false);
-    }, 0);
-  };
-
   const channels = useMemo<Channel[]>(() => {
     const counts = new Map<string, number>();
     videos.forEach(video => counts.set(video.channelName, (counts.get(video.channelName) || 0) + 1));
@@ -843,19 +824,7 @@ const App: React.FC = () => {
                  viewState === 'channel' && selectedChannel ? <ChannelView channelName={selectedChannel} config={channelConfigs[selectedChannel] || { id: selectedChannel, category: 'Uncategorized', isSubscribed: false }} videos={videos.filter(v => v.channelName === selectedChannel)} allVideos={videos} onUpdateChannel={handleUpdateChannel} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} onVideoSelect={handleVideoSelect} customCategories={config.customCategories} onAddCategory={c => setConfig(addCustomCategory(c))} enableGradient={enableGradient} density={config.uiDensity} /> :
                  viewState === 'folders' ? <FoldersView channels={channels} channelConfigs={channelConfigs} allVideos={videos} customCategories={config.customCategories} searchTerm={searchTerm} onToggleSubscribe={n => handleUpdateChannel(n, { isSubscribed: !channelConfigs[n]?.isSubscribed })} onNavigateChannel={n => { setSelectedChannel(n); setViewState('channel'); }} onUpdateChannelName={(id, n) => handleUpdateChannel(id, { displayName: n })} onRemoveChannel={n => { setConfig(moveVideosToChannel(videos.filter(v => v.channelName === n).map(v => v.id), 'Uncategorized')); setVideos(v => v.map(x => x.channelName === n ? { ...x, channelName: 'Uncategorized' } : x)); deleteChannelConfig(n); }} onAddFolder={handleDirectoryPick} onCreateCustomFolder={(n, c, i, v) => { handleUpdateChannel(n, { displayName: n.split('/').pop(), category: c, iconBlob: i || undefined, isSubscribed: true }); setConfig(moveVideosToChannel(v, n)); }} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} isUploadLimitReached={isUploadLimitReached} enableGradient={enableGradient} density={config.uiDensity} onVideoSelect={handleVideoSelect} /> :
                  <>
-                   <VideoGrid videos={visibleVideos} onVideoSelect={handleVideoSelect} density={config.uiDensity} watchProgress={config.watchProgress} />
-                   {visibleCount < displayedVideos.length && (
-                     <div className="flex justify-center pb-20">
-                       <button
-                         type="button"
-                         onClick={handleLoadMore}
-                         disabled={isLoadingMore}
-                         className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 disabled:cursor-wait disabled:opacity-60"
-                       >
-                         {isLoadingMore ? 'Loading...' : `Load more (${displayedVideos.length - visibleCount} remaining)`}
-                       </button>
-                     </div>
-                   )}
+                   <VideoGrid videos={displayedVideos} onVideoSelect={handleVideoSelect} density={config.uiDensity} watchProgress={config.watchProgress} />
                  </>
                  }
               </div>

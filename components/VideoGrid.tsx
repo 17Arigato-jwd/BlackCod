@@ -156,6 +156,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onVideoSelect, density = '
 };
 
 export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, density = 'comfortable', watchProgress = {} }) => {
+  const [renderLimit, setRenderLimit] = useState(40);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setRenderLimit(40);
+  }, [videos]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || renderLimit >= videos.length) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setRenderLimit(limit => Math.min(limit + 40, videos.length));
+        }
+      },
+      { rootMargin: '600px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [renderLimit, videos.length]);
+
   // Determine grid class based on density level
   let gridClass = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"; // Comfortable (Default)
   let gapClass = "gap-x-4 gap-y-8";
@@ -170,7 +192,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, den
 
   return (
     <div className={`pt-6 px-4 pb-20 grid transition-all duration-200 ${gridClass} ${gapClass}`}>
-      {videos.map((video) => (
+      {videos.slice(0, renderLimit).map((video) => (
         <VideoCard 
           key={video.id} 
           video={video} 
@@ -179,6 +201,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoSelect, den
           progress={watchProgress[video.id]}
         />
       ))}
+      {renderLimit < videos.length && <div ref={sentinelRef} className="col-span-full h-8" aria-hidden="true" />}
     </div>
   );
 };

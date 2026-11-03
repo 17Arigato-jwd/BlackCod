@@ -1,0 +1,22 @@
+# Fedora COPR SCM packaging
+
+The Fedora package is intentionally built from the Git checkout rather than
+shipping an Electron Forge binary. COPR can use
+`packaging/fedora/blackcod.spec` as the spec file for an SCM project.
+
+The spec builds the renderer and main process from source, installs the
+application under `/usr/libexec/blackcod`, and launches it through Fedora's
+system Electron package. This keeps the RPM architecture-native and avoids
+duplicating a private Electron runtime inside the package.
+
+For a COPR SCM project:
+
+1. Select the BlackCod Git repository and the branch to build.
+2. Set the spec file to `packaging/fedora/blackcod.spec`.
+3. Use the repository checkout as the SCM source; do not provide a release
+   tarball URL.
+4. Build the package for the Fedora releases supported by the installed
+   `electron` package.
+
+The package requires the repository's `package-lock.json` and runs
+`npm ci --ignore-scripts --include=dev` during `%build`.

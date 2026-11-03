@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=BlackCod
+Comment=Offline-first local video library
+Exec=blackcod %U
+Icon=blackcod
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;Player;
+StartupWMClass=BlackCod

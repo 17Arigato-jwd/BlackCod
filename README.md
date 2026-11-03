@@ -114,6 +114,15 @@ BlackCod is designed for local-first use. Video files remain in their original l
 
 External model packs are opt-in metadata registrations. The current adapter boundary does not download or bundle models; a compatible local runtime must be supplied separately before inference can run. Analysis jobs expose cancellation and resource-budget fields so future providers can remain bounded.
 
+### Fedora COPR
+
+Fedora packaging is maintained for COPR SCM builds in
+[packaging/fedora](./packaging/fedora). Configure the COPR project to use the
+Git repository and branch as its SCM source, with
+`packaging/fedora/blackcod.spec` as the spec file. The package builds BlackCod
+from source and uses Fedora's system Electron runtime rather than shipping a
+second private Electron binary.
+
 ---
 
 ## 📂 Project Structure
