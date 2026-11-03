@@ -120,6 +120,7 @@ const App: React.FC = () => {
   // Pending Upload State (For Confirmation)
   const [pendingUpload, setPendingUpload] = useState<{
     files: File[];
+    subtitleFiles: File[];
     sourceName: string;
     videoCount: number;
     systemFiles: { name: string, type: 'config' | 'video' | 'channel', file: File }[];
@@ -394,10 +395,13 @@ const App: React.FC = () => {
 
     const videoFiles: File[] = [];
     const systemFiles: { name: string, type: 'config' | 'video' | 'channel', file: File }[] = [];
+    const subtitleFiles: File[] = [];
 
     for (const file of allFiles) {
       if (isVideoFile(file)) {
         videoFiles.push(file);
+      } else if (/\.(srt|vtt)$/i.test(file.name)) {
+        subtitleFiles.push(file);
       } else if (file.name.toLowerCase().endsWith('.json')) {
         // Smart detection of JSON files
         if (file.name.includes('.config')) {
@@ -425,13 +429,14 @@ const App: React.FC = () => {
       }
     }
 
-    if (videoFiles.length === 0 && systemFiles.length === 0) {
+    if (videoFiles.length === 0 && systemFiles.length === 0 && subtitleFiles.length === 0) {
       addNotification("No supported files found.");
       return;
     }
 
     setPendingUpload({
       files: videoFiles,
+      subtitleFiles,
       sourceName,
       videoCount: videoFiles.length,
       systemFiles,
@@ -444,7 +449,7 @@ const App: React.FC = () => {
 
   const confirmUpload = async () => {
     if (!pendingUpload) return;
-    const { files, systemFiles, sourceName, candidateStartupFolderName, directoryHandle } = pendingUpload;
+    const { files, subtitleFiles, systemFiles, sourceName, candidateStartupFolderName, directoryHandle } = pendingUpload;
     setPendingUpload(null);
 
     let configProcessed = false;
@@ -482,7 +487,8 @@ const App: React.FC = () => {
     }
 
     if (files.length > 0) {
-      await processFiles(files, sourceName, false);
+      const processedVideos = await processFiles(files, sourceName, false);
+      await applySubtitleSidecars(subtitleFiles, sourceName, processedVideos);
     }
   };
 
@@ -510,7 +516,7 @@ const App: React.FC = () => {
     });
   };
 
-  const processFiles = async (videoFiles: File[], sourceName: string = "Upload", silent = false, forceChannelName?: string) => {
+  const processFiles = async (videoFiles: File[], sourceName: string = "Upload", silent = false, forceChannelName?: string): Promise<LocalVideo[]> => {
     const jobId = crypto.randomUUID();
     const newJob: UploadJob = { id: jobId, name: sourceName, current: 0, total: videoFiles.length };
     setUploadQueue(prev => [...prev, newJob]);
@@ -561,13 +567,14 @@ const App: React.FC = () => {
       return next;
     });
     setUploadQueue(prev => prev.filter(job => job.id !== jobId));
+    return processedVideos;
   };
 
-  const applySubtitleSidecars = async (files: File[], sourceName: string) => {
+  const applySubtitleSidecars = async (files: File[], sourceName: string, processedVideos: LocalVideo[]) => {
     const subtitleFiles = files.filter(file => /\.(srt|vtt)$/i.test(file.name));
     if (subtitleFiles.length === 0) return;
     const byBaseName = new Map(subtitleFiles.map(file => [file.name.toLowerCase(), file]));
-    for (const video of videos.filter(item => item.channelName === sourceName)) {
+    for (const video of processedVideos) {
       const subtitleFile = subtitleFileNameFor(video.file.name)
         .map(name => byBaseName.get(name.toLowerCase()))
         .find(Boolean);
