@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/bin/electron /usr/libexec/blackcod "$@"
+exec /usr/libexec/blackcod-electron/electron /usr/libexec/blackcod "$@"

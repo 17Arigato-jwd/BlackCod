@@ -1,6 +1,6 @@
 Name:           blackcod
 Version:        1.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Offline-first local video library
 License:        LicenseRef-BlackCod-Custom
 URL:            https://github.com/17Arigato-jwd/BlackCod
@@ -11,7 +11,7 @@ BuildRequires:  nodejs
 BuildRequires:  npm
 BuildRequires:  desktop-file-utils
 BuildRequires:  hicolor-icon-theme
-Requires:       electron
+Requires:       blackcod-electron
 
 %description
 BlackCod is a privacy-first desktop video library for organizing and watching
@@ -54,5 +54,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/blackcod.desktop
 %{_datadir}/icons/hicolor/scalable/apps/blackcod.svg
 
 %changelog
+* Wed Nov 04 2026 VCHS Studios <vchs@example.invalid> - 1.1.4-2
+- Require blackcod-electron and use pinned electron runtime path.
+
 * Tue Nov 03 2026 VCHS Studios <vchs@example.invalid> - 1.1.4-1
 - Initial Fedora COPR SCM package.
