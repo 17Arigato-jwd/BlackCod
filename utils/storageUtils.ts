@@ -211,6 +211,7 @@ export const saveLibraryIndex = async (records: VideoIndexRecord[]) => {
 };
 
 export const reconcileLibraryIndex = async (libraryId: string, activeVideoIds: string[]) => {
+  if (typeof indexedDB === 'undefined') return;
   const current = await loadLibraryIndex();
   const activeIds = new Set(activeVideoIds);
   Object.values(current).forEach(record => {

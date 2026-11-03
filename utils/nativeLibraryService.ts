@@ -1,7 +1,7 @@
 import { BlackCodApi, NativeScanProgress } from '../ipcContracts';
 import { VideoIndexRecord } from '../types';
 import { nativeDescriptorToIndexRecord } from './libraryUtils';
-import { saveLibraryIndex } from './storageUtils';
+import { reconcileLibraryIndex, saveLibraryIndex } from './storageUtils';
 
 export interface NativeLibraryScanResult {
   scanId: string;
@@ -23,6 +23,7 @@ export const scanNativeLibrary = async (
     const descriptors = await api.scanDirectory(libraryPath, scanId);
     const records = descriptors.map(descriptor => nativeDescriptorToIndexRecord(descriptor, libraryId));
     await saveLibraryIndex(records);
+    await reconcileLibraryIndex(libraryId, records.map(record => record.id));
     return { scanId, records, cancelled: false };
   } finally {
     removeProgressListener();
