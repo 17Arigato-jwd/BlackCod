@@ -43,6 +43,8 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [captionsEnabled, setCaptionsEnabled] = useState(transcript.length > 0);
+  const [captionOffset, setCaptionOffset] = useState(0);
+  const [captionScale, setCaptionScale] = useState(1);
   
   // Smart Seek State
   const [pendingSeek, setPendingSeek] = useState(0);
@@ -55,7 +57,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
   const controlsTimeoutRef = useRef<number>(0);
   const activeCaption = captionsEnabled
-    ? transcript.find(segment => currentTime >= segment.start && currentTime <= segment.end)?.text
+    ? transcript.find(segment => currentTime + captionOffset >= segment.start && currentTime + captionOffset <= segment.end)?.text
     : undefined;
 
   // Set initial time if provided
@@ -361,6 +363,34 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                  <ChevronRight className="w-4 h-4" />
                </div>
             </button>
+            <div className="border-t border-white/10 px-4 py-3">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span>Caption size</span>
+                <span className="text-xs text-gray-400">{Math.round(captionScale * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0.75}
+                max={1.5}
+                step={0.25}
+                value={captionScale}
+                onChange={event => setCaptionScale(Number(event.target.value))}
+                className="w-full accent-white"
+              />
+              <div className="mb-2 mt-3 flex items-center justify-between text-sm">
+                <span>Caption delay</span>
+                <span className="text-xs text-gray-400">{captionOffset > 0 ? '+' : ''}{captionOffset.toFixed(1)}s</span>
+              </div>
+              <input
+                type="range"
+                min={-5}
+                max={5}
+                step={0.5}
+                value={captionOffset}
+                onChange={event => setCaptionOffset(Number(event.target.value))}
+                className="w-full accent-white"
+              />
+            </div>
           </div>
         )}
 
@@ -476,7 +506,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
        )}
 
        {activeCaption && !isMiniMode && (
-         <div className="absolute bottom-24 left-1/2 z-20 max-w-[80%] -translate-x-1/2 rounded bg-black/75 px-3 py-1.5 text-center text-base font-medium text-white shadow-lg">
+         <div className="absolute bottom-24 left-1/2 z-20 max-w-[80%] -translate-x-1/2 rounded bg-black/75 px-3 py-1.5 text-center font-medium text-white shadow-lg" style={{ fontSize: `${captionScale}rem` }}>
            {activeCaption}
          </div>
        )}
