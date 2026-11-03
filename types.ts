@@ -116,6 +116,16 @@ export interface AnalysisJob {
   error?: string;
 }
 
+export interface ModelPack {
+  id: string;
+  name: string;
+  version: string;
+  kind: 'transcription' | 'vision' | 'audio';
+  sizeBytes: number;
+  installedAt: number;
+  enabled: boolean;
+}
+
 export interface VideoTag {
   videoId: string;
   tag: string;

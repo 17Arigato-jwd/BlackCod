@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AnalysisJob, AppConfig, ChannelConfig, Playlist, SmartChannel, VideoAnalysis, VideoIndexRecord, VideoTag } from '../types';
+import { AnalysisJob, AppConfig, ChannelConfig, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -13,6 +13,7 @@ const VIDEO_TAGS_KEY = 'localtube_video_tags';
 const SMART_CHANNELS_KEY = 'localtube_smart_channels';
 const ANALYSIS_JOBS_KEY = 'localtube_analysis_jobs';
 const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
+const MODEL_PACKS_KEY = 'localtube_model_packs';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -210,6 +211,28 @@ export const saveVideoAnalysis = async (analysis: VideoAnalysis) => {
   const analyses = await loadVideoAnalyses();
   analyses[analysis.videoId] = analysis;
   await set(VIDEO_ANALYSIS_KEY, analyses);
+};
+
+export const loadModelPacks = async (): Promise<ModelPack[]> =>
+  (await get<ModelPack[]>(MODEL_PACKS_KEY)) || [];
+
+export const saveModelPack = async (pack: ModelPack): Promise<ModelPack[]> => {
+  const packs = (await loadModelPacks()).filter(item => item.id !== pack.id);
+  const next = [...packs, pack];
+  await set(MODEL_PACKS_KEY, next);
+  return next;
+};
+
+export const setModelPackEnabled = async (packId: string, enabled: boolean): Promise<ModelPack[]> => {
+  const next = (await loadModelPacks()).map(pack => pack.id === packId ? { ...pack, enabled } : pack);
+  await set(MODEL_PACKS_KEY, next);
+  return next;
+};
+
+export const removeModelPack = async (packId: string): Promise<ModelPack[]> => {
+  const next = (await loadModelPacks()).filter(pack => pack.id !== packId);
+  await set(MODEL_PACKS_KEY, next);
+  return next;
 };
 
 // --- Config Management (LocalStorage) ---

@@ -1,5 +1,6 @@
 import { AnalysisJob, VideoAnalysis } from '../types';
 import {
+  loadModelPacks,
   loadAnalysisJobs,
   saveVideoAnalysis,
   updateAnalysisJob
@@ -37,9 +38,18 @@ export class AnalysisRunner {
     this.controller = new AbortController();
     try {
       while (!this.controller.signal.aborted) {
+        const modelPacks = await loadModelPacks();
         const jobs = sortAnalysisJobs((await loadAnalysisJobs()).filter(job => job.status === 'queued'));
         const job = jobs[0];
         if (!job) break;
+        if (!modelPacks.some(pack => pack.enabled && pack.kind === job.kind)) {
+          const skipped = await updateAnalysisJob(job.id, {
+            status: 'failed',
+            error: `No enabled ${job.kind} model pack is installed.`
+          });
+          if (skipped) this.onChange?.(skipped);
+          continue;
+        }
         await this.process(job, this.controller.signal);
       }
     } finally {
