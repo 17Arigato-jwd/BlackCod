@@ -95,6 +95,20 @@ export const removeVideoFromPlaylist = (playlistId: string, videoId: string): Pl
   return playlists;
 };
 
+export const moveVideoInPlaylist = (playlistId: string, videoId: string, direction: 'up' | 'down'): Playlist[] => {
+  const playlists = loadPlaylists().map(playlist => {
+    if (playlist.id !== playlistId) return playlist;
+    const index = playlist.videoIds.indexOf(videoId);
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (index < 0 || targetIndex < 0 || targetIndex >= playlist.videoIds.length) return playlist;
+    const videoIds = [...playlist.videoIds];
+    [videoIds[index], videoIds[targetIndex]] = [videoIds[targetIndex], videoIds[index]];
+    return { ...playlist, videoIds, updatedAt: Date.now() };
+  });
+  savePlaylists(playlists);
+  return playlists;
+};
+
 export const deletePlaylist = (playlistId: string): Playlist[] => {
   const playlists = loadPlaylists().filter(playlist => playlist.id !== playlistId);
   savePlaylists(playlists);

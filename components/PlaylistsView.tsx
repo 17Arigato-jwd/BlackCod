@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListVideo, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ListVideo, Plus, Trash2, X } from 'lucide-react';
 import { LocalVideo, Playlist } from '../types';
 import { formatTimeAgo } from '../utils/videoUtils';
 
@@ -8,6 +8,8 @@ interface PlaylistsViewProps {
   videos: LocalVideo[];
   onCreatePlaylist: () => void;
   onDeletePlaylist: (playlistId: string) => void;
+  onRemoveVideo: (playlistId: string, videoId: string) => void;
+  onMoveVideo: (playlistId: string, videoId: string, direction: 'up' | 'down') => void;
   onVideoSelect: (video: LocalVideo) => void;
 }
 
@@ -16,7 +18,7 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
   videos,
   onCreatePlaylist,
   onDeletePlaylist,
-  onVideoSelect
+  onVideoSelect, onRemoveVideo, onMoveVideo
 }) => {
   const videosById = new Map(videos.map(video => [video.id, video]));
 
@@ -67,13 +69,9 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
                   </button>
                 </div>
                 <div className="divide-y divide-white/5">
-                  {playlistVideos.slice(0, 6).map(video => (
-                    <button
-                      type="button"
-                      key={video.id}
-                      onClick={() => onVideoSelect(video)}
-                      className="flex w-full items-center gap-3 p-3 text-left hover:bg-white/10"
-                    >
+                  {playlistVideos.slice(0, 6).map((video, index) => (
+                    <div key={video.id} className="flex items-center gap-2 p-3 hover:bg-white/10">
+                      <button type="button" onClick={() => onVideoSelect(video)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                       {video.thumbnailUrl ? (
                         <img src={video.thumbnailUrl} alt="" className="h-12 w-20 rounded object-cover" />
                       ) : (
@@ -82,7 +80,13 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
                         </div>
                       )}
                       <span className="line-clamp-2 text-sm text-gray-200">{video.title}</span>
-                    </button>
+                      </button>
+                      <div className="flex shrink-0 items-center">
+                        <button type="button" onClick={() => onMoveVideo(playlist.id, video.id, 'up')} disabled={index === 0} className="rounded p-1 text-gray-400 hover:bg-white/10 disabled:opacity-20" title="Move up"><ChevronUp className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => onMoveVideo(playlist.id, video.id, 'down')} disabled={index === playlistVideos.length - 1} className="rounded p-1 text-gray-400 hover:bg-white/10 disabled:opacity-20" title="Move down"><ChevronDown className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => onRemoveVideo(playlist.id, video.id)} className="rounded p-1 text-gray-400 hover:bg-red-500/10 hover:text-red-400" title="Remove from playlist"><X className="h-4 w-4" /></button>
+                      </div>
+                    </div>
                   ))}
                   {playlistVideos.length === 0 && (
                     <p className="p-4 text-sm text-gray-500">This playlist is empty.</p>
