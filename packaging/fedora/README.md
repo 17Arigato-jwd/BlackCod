@@ -24,3 +24,5 @@ GitHub `main` archive as `Source0`; this is required because COPR's `rpkg`
 source-build step does not synthesize a `blackcod-%{version}.tar.gz` archive
 from the SCM checkout. Development dependencies are pruned after the build so
 the RPM does not ship build-only native tools such as esbuild.
+Automatic debug packages are disabled because the application is distributed
+as JavaScript and Electron assets rather than native debuggable binaries.

@@ -5,6 +5,7 @@ Summary:        Offline-first local video library
 License:        LicenseRef-BlackCod-Custom
 URL:            https://github.com/17Arigato-jwd/BlackCod
 Source0:        https://github.com/17Arigato-jwd/BlackCod/archive/refs/heads/main.tar.gz
+%global debug_package %{nil}
 
 BuildRequires:  nodejs
 BuildRequires:  npm
