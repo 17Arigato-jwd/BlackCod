@@ -29,3 +29,5 @@ jobs:
         run: npm run build
       - name: Build main process
         run: npm run build:main
+      - name: Verify Electron packaging
+        run: npm run package
