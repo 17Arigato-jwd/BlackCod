@@ -196,11 +196,13 @@ export const deletePlaylist = (playlistId: string): Playlist[] => {
 };
 
 export const loadLibraryIndex = async (): Promise<Record<string, VideoIndexRecord>> => {
+  if (typeof indexedDB === 'undefined') return {};
   await ensureIndexedDbSchema();
   return (await get(LIBRARY_INDEX_KEY)) || {};
 };
 
 export const saveLibraryIndex = async (records: VideoIndexRecord[]) => {
+  if (typeof indexedDB === 'undefined') return;
   const current = await loadLibraryIndex();
   records.forEach(record => {
     current[record.id] = record;
