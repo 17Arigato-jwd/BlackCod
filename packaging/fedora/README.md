@@ -5,9 +5,18 @@ shipping an Electron Forge binary. COPR can use
 `packaging/fedora/blackcod.spec` as the spec file for an SCM project.
 
 The spec builds the renderer and main process from source, installs the
-application under `/usr/libexec/blackcod`, and launches it through Fedora's
-system Electron package. This keeps the RPM architecture-native and avoids
-duplicating a private Electron runtime inside the package.
+application under `/usr/libexec/blackcod`, and launches it through the
+distribution Electron package. Fedora's standard repositories do not
+currently provide Electron for every supported target, so end users should
+enable Terra before installing BlackCod:
+
+```bash
+sudo dnf config-manager addrepo --from-repofile=https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
+sudo dnf install terra-release
+```
+
+This keeps the RPM architecture-native and avoids duplicating a private
+Electron runtime inside the package.
 
 For a COPR SCM project:
 
