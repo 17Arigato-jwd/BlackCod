@@ -4,6 +4,7 @@ export interface BlackCodApi {
   selectDirectory: () => Promise<string | null>;
   scanDirectory: (directoryPath: string, scanId?: string) => Promise<NativeFileDescriptor[]>;
   cancelDirectoryScan: (scanId: string) => Promise<boolean>;
+  getMediaUrl: (filePath: string) => Promise<string | null>;
   onScanProgress: (listener: (progress: NativeScanProgress) => void) => () => void;
   revealPath: (path: string) => Promise<boolean>;
 }

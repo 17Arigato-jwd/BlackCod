@@ -1,10 +1,13 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell } from "electron";
 import { stat } from "fs/promises";
 import path from "path";
+import { pathToFileURL } from "url";
 import { normalizeNativePath } from "./utils/nativePathUtils";
+import { isPathWithin } from "./utils/nativePathUtils";
 import { scanNativeDirectory } from "./utils/nativeScanUtils";
 
 const cancelledScans = new Set<string>();
+const approvedLibraryRoots = new Set<string>();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -31,13 +34,16 @@ function createWindow() {
 app.whenReady().then(() => {
   ipcMain.handle('blackcod:select-directory', async () => {
     const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
-    return result.canceled ? null : result.filePaths[0] || null;
+    const selectedPath = result.canceled ? null : result.filePaths[0] || null;
+    if (selectedPath) approvedLibraryRoots.add(path.resolve(selectedPath));
+    return selectedPath;
   });
   ipcMain.handle('blackcod:scan-directory', async (event, directoryPath: unknown, scanIdValue: unknown) => {
     const safePath = normalizeNativePath(directoryPath);
     if (!safePath) throw new Error('Invalid directory path.');
     const metadata = await stat(safePath);
     if (!metadata.isDirectory()) throw new Error('The selected path is not a directory.');
+    approvedLibraryRoots.add(safePath);
     const scanId = typeof scanIdValue === 'string' && scanIdValue ? scanIdValue : crypto.randomUUID();
     cancelledScans.delete(scanId);
     try {
@@ -45,6 +51,15 @@ app.whenReady().then(() => {
         scanId,
         isCancelled: () => cancelledScans.has(scanId),
         onProgress: progress => event.sender.send('blackcod:scan-progress', progress)
+      });
+      ipcMain.handle('blackcod:get-media-url', async (_event, filePath: unknown) => {
+        const safePath = normalizeNativePath(filePath);
+        if (!safePath || ![...approvedLibraryRoots].some(root => isPathWithin(safePath, root))) {
+          return null;
+        }
+        const metadata = await stat(safePath);
+        if (!metadata.isFile()) return null;
+        return pathToFileURL(safePath).toString();
       });
     } finally {
       cancelledScans.delete(scanId);
