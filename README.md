@@ -43,17 +43,14 @@ A high-performance desktop application designed to organize, view, and manage yo
 
 ## 📸 Screenshots
 
-<p align="center">
-<em>Showcasing the BlackCod Interface</em>
-</p>
+The repository includes screenshots of the Fedora COPR publishing workflow.
+There are currently no application UI screenshots checked into the repository,
+so this section intentionally does not reference placeholder or missing app
+images.
 
-| Installer | Home Dashboard |
+| SCM package configuration | Build results |
 | --- | --- |
-| <img src="assets/Install.gif" width="400" /> | <img src="path/to/screenshot2.png" width="400" /> |
-
-| Video Player | Customization Settings |
-| --- | --- |
-| <img src="path/to/screenshot3.png" width="400" /> | <img src="path/to/screenshot4.png" width="400" /> |
+| <img src="docs/screenshots/copr-scm-package-form.png" alt="COPR SCM package configuration" width="420" /> | <img src="docs/screenshots/copr-build-result.png" alt="COPR build results" width="420" /> |
 
 ---
 
@@ -117,12 +114,118 @@ External model packs are opt-in metadata registrations. The current adapter boun
 
 ### Fedora COPR
 
-Fedora packaging is maintained for COPR SCM builds in
-[packaging/fedora](./packaging/fedora). Configure the COPR project to use the
-Git repository and branch as its SCM source, with
-`packaging/fedora/blackcod.spec` as the spec file. The package builds BlackCod
-from source and uses Fedora's system Electron runtime rather than shipping a
-second private Electron binary.
+The Fedora download channel for BlackCod is the
+[17Arigato-jwd/blackcod COPR repository](https://copr.fedorainfracloud.org/coprs/17Arigato-jwd/blackcod/).
+It provides Fedora RPM packages built from source. BlackCod uses the
+distribution Electron runtime; on Fedora, Electron is provided through the
+Terra repository.
+
+#### Install BlackCod on Fedora
+
+On a supported Fedora system, enable Terra for the Electron runtime, then
+enable the BlackCod COPR repository and install BlackCod:
+
+```bash
+sudo dnf config-manager addrepo --from-repofile=https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
+sudo dnf install terra-release
+sudo dnf copr enable 17Arigato-jwd/blackcod
+sudo dnf install blackcod
+```
+
+If `dnf copr` is not available, install the COPR command plugin first:
+
+```bash
+sudo dnf install 'dnf-command(copr)'
+```
+
+If `dnf config-manager` is not available, install its plugin first:
+
+```bash
+sudo dnf install 'dnf-command(config-manager)'
+```
+
+Terra is a third-party Fedora repository. Review its repository policy and
+signing configuration before enabling it. It is required because Fedora's
+standard repositories do not currently provide the `electron` runtime needed
+by the BlackCod RPM.
+
+Launch it from the application menu or run:
+
+```bash
+blackcod
+```
+
+The package installs the application launcher, desktop entry, icon, and Fedora
+runtime dependencies. Your video files stay on your machine; installing from
+COPR does not upload or synchronize your media library.
+
+#### Update, remove, or disable the repository
+
+Update BlackCod with the rest of your Fedora packages:
+
+```bash
+sudo dnf upgrade blackcod
+```
+
+Remove only the application:
+
+```bash
+sudo dnf remove blackcod
+```
+
+Disable the BlackCod COPR repository:
+
+```bash
+sudo dnf copr disable 17Arigato-jwd/blackcod
+```
+
+To inspect whether the repository is enabled:
+
+```bash
+dnf repolist | grep -i blackcod
+```
+
+#### COPR maintainer notes
+
+The package is built from the Git repository using the Fedora spec in
+[packaging/fedora](./packaging/fedora). Maintainers should configure the SCM
+package with:
+
+| Field | Value |
+| --- | --- |
+| Git repository | `https://github.com/17Arigato-jwd/BlackCod.git` |
+| Branch/committish | `main` |
+| Spec file | `packaging/fedora/blackcod.spec` |
+| Build method | `rpkg` |
+
+COPR builds the commit visible on the configured branch. Publish changes
+before rebuilding:
+
+```bash
+git add -A
+git commit -m "Describe the change"
+git push origin main
+```
+
+The build requires internet access because the spec runs `npm ci`. Detailed
+packaging notes and troubleshooting are in
+[packaging/fedora/README.md](./packaging/fedora/README.md).
+
+The RPM declares `Requires: electron`. COPR can build the package without
+resolving runtime dependencies, but end-user installation needs the Terra
+repository enabled as shown above.
+
+For maintainers, common build issues include:
+
+- **Missing `blackcod-*.tar.gz`:** ensure the SCM package uses the current
+  `packaging/fedora/blackcod.spec`, whose `Source0` points to the GitHub
+  archive.
+- **Missing build-id for esbuild:** ensure the spec runs
+  `npm prune --omit=dev` after the build and before `%install`.
+- **Empty debugsource file list:** ensure the spec contains
+  `%global debug_package %{nil}`.
+- **Build uses old behavior:** verify the packaging commits were pushed to
+  GitHub before rebuilding.
 
 ---
 
