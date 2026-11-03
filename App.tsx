@@ -52,7 +52,9 @@ import {
   reconcileLibraryIndex,
   loadSmartChannels,
   saveSmartChannels,
-  loadVideoAnalyses
+  loadVideoAnalyses,
+  loadPlayQueue,
+  savePlayQueue
 } from './utils/storageUtils';
 import { transcriptText } from './utils/analysisUtils';
 
@@ -102,6 +104,7 @@ const App: React.FC = () => {
   const [videos, setVideos] = useState<LocalVideo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<LocalVideo | null>(null);
   const [playQueue, setPlayQueue] = useState<LocalVideo[]>([]);
+  const queueHydratedRef = useRef(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
@@ -183,6 +186,20 @@ const App: React.FC = () => {
       });
     };
   }, []);
+
+  useEffect(() => {
+    if (videos.length === 0 || queueHydratedRef.current) return;
+    const videosById = new Map(videos.map(video => [video.id, video]));
+    const restoredQueue = loadPlayQueue()
+      .map(videoId => videosById.get(videoId))
+      .filter((video): video is LocalVideo => !!video);
+    setPlayQueue(restoredQueue);
+    queueHydratedRef.current = true;
+  }, [videos]);
+
+  useEffect(() => {
+    if (queueHydratedRef.current) savePlayQueue(playQueue.map(video => video.id));
+  }, [playQueue]);
 
   const addNotification = (message: string) => {
     const id = Date.now().toString();
@@ -585,6 +602,7 @@ const App: React.FC = () => {
   };
 
   const handleVideoSelect = (video: LocalVideo) => {
+    setPlayQueue(queue => queue.filter(item => item.id !== video.id));
     setSelectedVideo(video);
     setIsMiniPlayer(false);
     setConfig(addToHistory(video.id));

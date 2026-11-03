@@ -14,6 +14,7 @@ const SMART_CHANNELS_KEY = 'localtube_smart_channels';
 const ANALYSIS_JOBS_KEY = 'localtube_analysis_jobs';
 const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
 const MODEL_PACKS_KEY = 'localtube_model_packs';
+const PLAY_QUEUE_KEY = 'localtube_play_queue';
 
 export const defaultConfig: AppConfig = {
   likedVideoIds: [],
@@ -173,6 +174,21 @@ export const loadSmartChannels = (): SmartChannel[] => {
     console.error('Failed to load smart channels.', error);
     return [];
   }
+};
+
+export const loadPlayQueue = (): string[] => {
+  try {
+    const value = localStorage.getItem(PLAY_QUEUE_KEY);
+    const parsed: unknown = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) && parsed.every(item => typeof item === 'string') ? parsed : [];
+  } catch (error) {
+    console.error('Failed to load playback queue.', error);
+    return [];
+  }
+};
+
+export const savePlayQueue = (videoIds: string[]) => {
+  localStorage.setItem(PLAY_QUEUE_KEY, JSON.stringify([...new Set(videoIds)]));
 };
 
 export const saveSmartChannels = (channels: SmartChannel[]) => {
