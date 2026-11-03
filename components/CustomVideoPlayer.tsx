@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { formatDuration } from '../utils/videoUtils';
 import { LoadingAnimation } from './LoadingAnimation';
+import { TranscriptSegment } from '../types';
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -19,10 +20,11 @@ interface CustomVideoPlayerProps {
   videoRef?: React.RefObject<HTMLVideoElement>;
   title?: string;
   isMiniMode?: boolean;
+  transcript?: TranscriptSegment[];
 }
 
 export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ 
-  src, poster, autoPlay = false, startTime = 0, onEnded, onTimeUpdate, onLoadedMetadata, onToggleMiniPlayer, enableGradient = false, title, isMiniMode = false
+  src, poster, autoPlay = false, startTime = 0, onEnded, onTimeUpdate, onLoadedMetadata, onToggleMiniPlayer, enableGradient = false, title, isMiniMode = false, transcript = []
 }) => {
   const innerVideoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,6 +40,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [captionsEnabled, setCaptionsEnabled] = useState(transcript.length > 0);
   
   // Smart Seek State
   const [pendingSeek, setPendingSeek] = useState(0);
@@ -49,6 +52,9 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [qualityLabel, setQualityLabel] = useState('Source');
 
   const controlsTimeoutRef = useRef<number>(0);
+  const activeCaption = captionsEnabled
+    ? transcript.find(segment => currentTime >= segment.start && currentTime <= segment.end)?.text
+    : undefined;
 
   // Set initial time if provided
   useEffect(() => {
@@ -467,6 +473,12 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
          </div>
        )}
 
+       {activeCaption && !isMiniMode && (
+         <div className="absolute bottom-24 left-1/2 z-20 max-w-[80%] -translate-x-1/2 rounded bg-black/75 px-3 py-1.5 text-center text-base font-medium text-white shadow-lg">
+           {activeCaption}
+         </div>
+       )}
+
        {/* Controls Container */}
        <div 
          className={`absolute transition-all duration-300 z-30 ${isMiniMode ? 'bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent' : theme.controlBar} ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
@@ -539,7 +551,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                     </button>
                   )}
 
-                  <button className={`${theme.iconColor} opacity-70 hover:opacity-100`} title="Closed Captions (Unavailable)">
+                  <button onClick={() => setCaptionsEnabled(enabled => !enabled)} className={`${theme.iconColor} ${captionsEnabled ? 'text-[var(--yt-brand)]' : 'opacity-70 hover:opacity-100'}`} title={captionsEnabled ? 'Hide captions' : 'Show captions'}>
                      <Captions className="w-5 h-5" />
                   </button>
                   

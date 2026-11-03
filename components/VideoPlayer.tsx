@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LocalVideo, ChannelConfig, Playlist, VideoTag } from '../types';
+import { LocalVideo, ChannelConfig, Playlist, VideoTag, TranscriptSegment } from '../types';
 import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
@@ -28,10 +28,11 @@ interface VideoPlayerProps {
   onAddToPlaylist: (playlistId: string) => void;
   onCreatePlaylist: (name: string) => void;
   videoTags: VideoTag[];
+  transcript?: TranscriptSegment[];
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags
+  video, channelConfig, suggestedVideos,   onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -151,6 +152,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             autoPlay={autoplay}
             startTime={startTime}
             onLoadedMetadata={handleLoadedMetadata}
+            transcript={transcript}
             enableGradient={enableGradient}
             title={video.title}
             onToggleMiniPlayer={onToggleMiniPlayer}

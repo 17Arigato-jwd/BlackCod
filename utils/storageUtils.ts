@@ -159,6 +159,27 @@ export const saveAnalysisJobs = async (jobs: AnalysisJob[]) => {
   await set(ANALYSIS_JOBS_KEY, jobs);
 };
 
+export const updateAnalysisJob = async (
+  jobId: string,
+  updates: Partial<Pick<AnalysisJob, 'status' | 'attempts' | 'updatedAt' | 'error'>>
+): Promise<AnalysisJob | undefined> => {
+  const jobs = await loadAnalysisJobs();
+  let updatedJob: AnalysisJob | undefined;
+  const nextJobs = jobs.map(job => {
+    if (job.id !== jobId) return job;
+    updatedJob = { ...job, ...updates, updatedAt: Date.now() };
+    return updatedJob;
+  });
+  if (updatedJob) await saveAnalysisJobs(nextJobs);
+  return updatedJob;
+};
+
+export const cancelAnalysisJob = async (jobId: string): Promise<AnalysisJob | undefined> =>
+  updateAnalysisJob(jobId, { status: 'cancelled', error: undefined });
+
+export const retryAnalysisJob = async (jobId: string): Promise<AnalysisJob | undefined> =>
+  updateAnalysisJob(jobId, { status: 'queued', error: undefined });
+
 export const enqueueAnalysisJob = async (
   videoId: string,
   kind: AnalysisJob['kind'],
