@@ -21,6 +21,9 @@ interface VideoPlayerProps {
   onRenameVideo: (id: string, newTitle: string) => void;
   onToggleMiniPlayer?: () => void;
   onTimeUpdate?: (time: number) => void; // New Prop for time tracking bubbling
+  onEnded?: () => void;
+  onQueueVideo?: (video: LocalVideo) => void;
+  queueLength?: number;
   enableGradient?: boolean;
   autoplay?: boolean;
   startTime?: number;
@@ -32,7 +35,7 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos,   onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
+  video, channelConfig, suggestedVideos,       onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = []
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
@@ -157,6 +160,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             title={video.title}
             onToggleMiniPlayer={onToggleMiniPlayer}
             onTimeUpdate={handleTimeUpdateWrapper}
+            onEnded={onEnded}
           />
         </div>
 
@@ -304,7 +308,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* Suggested Videos Column */}
       <div className="w-full lg:w-[350px] xl:w-[400px] flex flex-col gap-2">
-        <h3 className="text-lg font-bold mb-2">Up Next</h3>
+        <h3 className="mb-2 text-lg font-bold">Up Next {queueLength > 0 && <span className="text-sm font-normal text-gray-400">· {queueLength} queued</span>}</h3>
         {suggestedVideos.filter(v => v.id !== video.id).map(suggestion => (
           <div 
             key={suggestion.id} 
@@ -330,6 +334,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                  <span>New</span>
                  <span>•</span>
                  <span>{formatTimeAgo(suggestion.lastModified)}</span>
+                 {onQueueVideo && (
+                   <button type="button" onClick={(event) => { event.stopPropagation(); onQueueVideo(suggestion); }} className="ml-1 text-blue-400 hover:text-blue-300">
+                     Play next
+                   </button>
+                 )}
                </div>
              </div>
           </div>
