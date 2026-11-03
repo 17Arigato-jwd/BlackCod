@@ -29,8 +29,10 @@ app.whenReady().then(() => {
     return result.canceled ? null : result.filePaths[0] || null;
   });
   ipcMain.handle('blackcod:reveal-path', async (_event, targetPath: unknown) => {
-    if (typeof targetPath !== 'string' || !targetPath.trim()) return false;
-    const result = await shell.openPath(targetPath);
+    if (typeof targetPath !== 'string' || !targetPath.trim() || !path.isAbsolute(targetPath) || targetPath.includes('\0')) {
+      return false;
+    }
+    const result = await shell.openPath(path.normalize(targetPath));
     if (result) throw new Error(result);
     return true;
   });
