@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AnalysisJob, AppConfig, ChannelConfig, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoIndexRecord, VideoTag } from '../types';
+import { AnalysisJob, AppConfig, ChannelConfig, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoChapter, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
 
 const CONFIG_KEY = 'localtube_config';
@@ -253,6 +253,26 @@ export const saveVideoAnalysis = async (analysis: VideoAnalysis) => {
   const analyses = await loadVideoAnalyses();
   analyses[analysis.videoId] = analysis;
   await set(VIDEO_ANALYSIS_KEY, analyses);
+};
+
+export const updateVideoChapters = async (videoId: string, chapters: VideoChapter[]): Promise<VideoAnalysis> => {
+  const analyses = await loadVideoAnalyses();
+  const current = analyses[videoId] || {
+    videoId,
+    analysisVersion: 1,
+    status: 'pending' as const,
+    language: null,
+    summary: null,
+    analyzedAt: null,
+    error: null,
+    transcript: [],
+    modelId: null,
+    chapters: []
+  };
+  const next = { ...current, chapters };
+  analyses[videoId] = next;
+  await set(VIDEO_ANALYSIS_KEY, analyses);
+  return next;
 };
 
 export const loadModelPacks = async (): Promise<ModelPack[]> =>

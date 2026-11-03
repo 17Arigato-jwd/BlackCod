@@ -37,14 +37,16 @@ interface VideoPlayerProps {
   transcript?: TranscriptSegment[];
   chapters?: VideoChapter[];
   onChapterSelect?: (chapter: VideoChapter) => void;
+  onChaptersChange?: (chapters: VideoChapter[]) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = [], chapters = [], onChapterSelect
+  video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = [], chapters = [], onChapterSelect, onChaptersChange
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
+  const [chapterTitle, setChapterTitle] = useState('');
 
   // Ref to track time for sync if needed, though mostly handled by CustomVideoPlayer props in App
   const lastTimeRef = useRef(0);
@@ -272,6 +274,31 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                <span>{formatDuration(video.duration)} long</span>
                <span>•</span>
                <span>{formatTimeAgo(video.lastModified)}</span>
+             </div>
+             <div className={`mt-4 rounded-xl p-4 ${descBg}`}>
+               <div className="mb-3 flex items-center justify-between">
+                 <h3 className="font-semibold text-white">Chapters</h3>
+                 <span className="text-xs text-gray-500">Generated chapters can be replaced with manual ones.</span>
+               </div>
+               <div className="mb-3 flex gap-2">
+                 <input value={chapterTitle} onChange={event => setChapterTitle(event.target.value)} placeholder="Chapter title" className="min-w-0 flex-1 rounded bg-black/30 px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-white/30" />
+                 <button type="button" onClick={() => {
+                   if (!chapterTitle.trim() || !onChaptersChange) return;
+                   const start = lastTimeRef.current;
+                   const nextChapter: VideoChapter = { id: crypto.randomUUID(), start, end: video.duration || start + 60, title: chapterTitle.trim(), source: 'manual', confidence: 1, modelId: null };
+                   onChaptersChange([...chapters.filter(chapter => chapter.source !== 'manual'), nextChapter].sort((a, b) => a.start - b.start));
+                   setChapterTitle('');
+                 }} className="rounded bg-[var(--yt-brand)] px-3 py-2 text-sm font-medium text-white hover:brightness-110">Add at current time</button>
+               </div>
+               <div className="space-y-1">
+                 {chapters.map(chapter => (
+                   <div key={chapter.id} className="flex items-center gap-2 text-xs text-gray-300">
+                     <span className="w-12 text-gray-500">{formatDuration(chapter.start)}</span>
+                     <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
+                     <span className="text-gray-500">{chapter.source}</span>
+                   </div>
+                 ))}
+               </div>
              </div>
              <p className="text-white whitespace-pre-wrap">
                Channel: {video.channelName}<br/>
