@@ -45,7 +45,7 @@ export const explainSmartChannelMatch = (
         reason = `language is "${rule.value}"`;
         break;
       case 'hasSubtitles':
-        matches = (analysis?.transcript.length || 0) > 0 === Boolean(rule.value);
+        matches = ((analysis?.transcript.length || 0) > 0) === Boolean(rule.value);
         reason = Boolean(rule.value) ? 'has subtitles' : 'has no subtitles';
         break;
       case 'folder':
