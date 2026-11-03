@@ -16,7 +16,21 @@ const ANALYSIS_JOBS_KEY = 'localtube_analysis_jobs';
 const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
 const MODEL_PACKS_KEY = 'localtube_model_packs';
 const PLAY_QUEUE_KEY = 'localtube_play_queue';
+const STORAGE_SCHEMA_KEY = 'localtube_storage_schema';
 export const STORAGE_SCHEMA_VERSION = 2;
+let indexedDbSchemaPromise: Promise<void> | undefined;
+
+export const ensureIndexedDbSchema = async (): Promise<void> => {
+  if (!indexedDbSchemaPromise) {
+    indexedDbSchemaPromise = (async () => {
+      const stored = await get<number>(STORAGE_SCHEMA_KEY);
+      if (stored !== STORAGE_SCHEMA_VERSION) {
+        await set(STORAGE_SCHEMA_KEY, STORAGE_SCHEMA_VERSION);
+      }
+    })();
+  }
+  await indexedDbSchemaPromise;
+};
 
 interface ConfigEnvelope {
   schemaVersion: number;
@@ -154,8 +168,10 @@ export const deletePlaylist = (playlistId: string): Playlist[] => {
   return playlists;
 };
 
-export const loadLibraryIndex = async (): Promise<Record<string, VideoIndexRecord>> =>
-  (await get(LIBRARY_INDEX_KEY)) || {};
+export const loadLibraryIndex = async (): Promise<Record<string, VideoIndexRecord>> => {
+  await ensureIndexedDbSchema();
+  return (await get(LIBRARY_INDEX_KEY)) || {};
+};
 
 export const saveLibraryIndex = async (records: VideoIndexRecord[]) => {
   const current = await loadLibraryIndex();
@@ -176,8 +192,10 @@ export const reconcileLibraryIndex = async (libraryId: string, activeVideoIds: s
   await set(LIBRARY_INDEX_KEY, current);
 };
 
-export const loadVideoTags = async (): Promise<Record<string, VideoTag[]>> =>
-  (await get(VIDEO_TAGS_KEY)) || {};
+export const loadVideoTags = async (): Promise<Record<string, VideoTag[]>> => {
+  await ensureIndexedDbSchema();
+  return (await get(VIDEO_TAGS_KEY)) || {};
+};
 
 export const saveVideoTags = async (tags: VideoTag[]) => {
   const current = await loadVideoTags();
@@ -221,8 +239,10 @@ export const saveSmartChannels = (channels: SmartChannel[]) => {
   localStorage.setItem(SMART_CHANNELS_KEY, JSON.stringify(channels));
 };
 
-export const loadAnalysisJobs = async (): Promise<AnalysisJob[]> =>
-  (await get<AnalysisJob[]>(ANALYSIS_JOBS_KEY)) || [];
+export const loadAnalysisJobs = async (): Promise<AnalysisJob[]> => {
+  await ensureIndexedDbSchema();
+  return (await get<AnalysisJob[]>(ANALYSIS_JOBS_KEY)) || [];
+};
 
 export const saveAnalysisJobs = async (jobs: AnalysisJob[]) => {
   await set(ANALYSIS_JOBS_KEY, jobs);
@@ -272,8 +292,10 @@ export const enqueueAnalysisJob = async (
   return job;
 };
 
-export const loadVideoAnalyses = async (): Promise<Record<string, VideoAnalysis>> =>
-  (await get<Record<string, VideoAnalysis>>(VIDEO_ANALYSIS_KEY)) || {};
+export const loadVideoAnalyses = async (): Promise<Record<string, VideoAnalysis>> => {
+  await ensureIndexedDbSchema();
+  return (await get<Record<string, VideoAnalysis>>(VIDEO_ANALYSIS_KEY)) || {};
+};
 
 export const saveVideoAnalysis = async (analysis: VideoAnalysis) => {
   const analyses = await loadVideoAnalyses();
@@ -301,8 +323,10 @@ export const updateVideoChapters = async (videoId: string, chapters: VideoChapte
   return next;
 };
 
-export const loadModelPacks = async (): Promise<ModelPack[]> =>
-  (await get<ModelPack[]>(MODEL_PACKS_KEY)) || [];
+export const loadModelPacks = async (): Promise<ModelPack[]> => {
+  await ensureIndexedDbSchema();
+  return (await get<ModelPack[]>(MODEL_PACKS_KEY)) || [];
+};
 
 export const saveModelPack = async (pack: ModelPack): Promise<ModelPack[]> => {
   const packs = (await loadModelPacks()).filter(item => item.id !== pack.id);
