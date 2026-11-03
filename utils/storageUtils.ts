@@ -85,6 +85,18 @@ export const addVideoToPlaylist = (playlistId: string, videoId: string): Playlis
   return playlists;
 };
 
+export const renamePlaylist = (playlistId: string, name: string): Playlist[] => {
+  const trimmedName = name.trim();
+  if (!trimmedName) return loadPlaylists();
+  const playlists = loadPlaylists().map(playlist =>
+    playlist.id === playlistId
+      ? { ...playlist, name: trimmedName, updatedAt: Date.now() }
+      : playlist
+  );
+  savePlaylists(playlists);
+  return playlists;
+};
+
 export const removeVideoFromPlaylist = (playlistId: string, videoId: string): Playlist[] => {
   const playlists = loadPlaylists().map(playlist =>
     playlist.id === playlistId

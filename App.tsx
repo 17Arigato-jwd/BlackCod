@@ -42,6 +42,7 @@ import {
   addVideoToPlaylist,
   removeVideoFromPlaylist,
   moveVideoInPlaylist,
+  renamePlaylist,
   createPlaylist,
   deletePlaylist,
   saveLibraryIndex,
@@ -787,7 +788,7 @@ const App: React.FC = () => {
               <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading view...</div>}>
               <div>
                 {viewState === 'settings' ? <SettingsView config={config} onUpdateConfig={setConfig} /> :
-                viewState === 'playlists' ? <PlaylistsView playlists={playlists} videos={videos} onCreatePlaylist={handleCreatePlaylistFromView} onDeletePlaylist={(id) => setPlaylists(deletePlaylist(id))} onRemoveVideo={(playlistId, videoId) => setPlaylists(removeVideoFromPlaylist(playlistId, videoId))} onMoveVideo={(playlistId, videoId, direction) => setPlaylists(moveVideoInPlaylist(playlistId, videoId, direction))} onVideoSelect={handleVideoSelect} /> :
+                viewState === 'playlists' ? <PlaylistsView playlists={playlists} videos={videos} onCreatePlaylist={handleCreatePlaylistFromView} onDeletePlaylist={(id) => setPlaylists(deletePlaylist(id))} onRenamePlaylist={(id, name) => setPlaylists(renamePlaylist(id, name))} onRemoveVideo={(playlistId, videoId) => setPlaylists(removeVideoFromPlaylist(playlistId, videoId))} onMoveVideo={(playlistId, videoId, direction) => setPlaylists(moveVideoInPlaylist(playlistId, videoId, direction))} onVideoSelect={handleVideoSelect} /> :
                 viewState === 'smart_channels' ? <SmartChannelsView channels={smartChannels} videos={videos} config={config} tags={videoTags} onSelect={handleVideoSelect} /> :
                 viewState === 'home' ? <HomeView videos={videos} watchProgress={config.watchProgress} onVideoSelect={handleVideoSelect} /> :
                  viewState === 'channel' && selectedChannel ? <ChannelView channelName={selectedChannel} config={channelConfigs[selectedChannel] || { id: selectedChannel, category: 'Uncategorized', isSubscribed: false }} videos={videos.filter(v => v.channelName === selectedChannel)} allVideos={videos} onUpdateChannel={handleUpdateChannel} onEditCustomFolder={(id, n, c, i, v) => { handleUpdateChannel(id, { displayName: n, category: c, iconBlob: i || undefined }); setConfig(moveVideosToChannel(v, id)); }} onVideoSelect={handleVideoSelect} customCategories={config.customCategories} onAddCategory={c => setConfig(addCustomCategory(c))} enableGradient={enableGradient} density={config.uiDensity} /> :

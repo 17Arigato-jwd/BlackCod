@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, ListVideo, Plus, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit2, ListVideo, Plus, Trash2, X } from 'lucide-react';
 import { LocalVideo, Playlist } from '../types';
 import { formatTimeAgo } from '../utils/videoUtils';
 
@@ -8,6 +8,7 @@ interface PlaylistsViewProps {
   videos: LocalVideo[];
   onCreatePlaylist: () => void;
   onDeletePlaylist: (playlistId: string) => void;
+  onRenamePlaylist: (playlistId: string, name: string) => void;
   onRemoveVideo: (playlistId: string, videoId: string) => void;
   onMoveVideo: (playlistId: string, videoId: string, direction: 'up' | 'down') => void;
   onVideoSelect: (video: LocalVideo) => void;
@@ -18,7 +19,7 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
   videos,
   onCreatePlaylist,
   onDeletePlaylist,
-  onVideoSelect, onRemoveVideo, onMoveVideo
+  onVideoSelect, onRemoveVideo, onMoveVideo, onRenamePlaylist
 }) => {
   const videosById = new Map(videos.map(video => [video.id, video]));
 
@@ -59,6 +60,17 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
                       {playlistVideos.length} videos · updated {formatTimeAgo(playlist.updatedAt)}
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const name = window.prompt('Rename playlist', playlist.name);
+                      if (name?.trim()) onRenamePlaylist(playlist.id, name);
+                    }}
+                    className="rounded-full p-2 text-gray-400 hover:bg-white/10 hover:text-white"
+                    title={`Rename ${playlist.name}`}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => onDeletePlaylist(playlist.id)}
