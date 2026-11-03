@@ -25,6 +25,7 @@ npm run typecheck
 npm run test
 npm run build
 npm run build:main
+npm prune --omit=dev
 
 %install
 install -d %{buildroot}%{_libexecdir}/%{name}

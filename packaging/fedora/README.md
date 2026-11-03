@@ -22,4 +22,5 @@ The package requires the repository's `package-lock.json` and runs
 `npm ci --ignore-scripts --include=dev` during `%build`. The spec uses the
 GitHub `main` archive as `Source0`; this is required because COPR's `rpkg`
 source-build step does not synthesize a `blackcod-%{version}.tar.gz` archive
-from the SCM checkout.
+from the SCM checkout. Development dependencies are pruned after the build so
+the RPM does not ship build-only native tools such as esbuild.
