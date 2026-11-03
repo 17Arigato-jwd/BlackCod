@@ -37,6 +37,7 @@ A high-performance desktop application designed to organize, view, and manage yo
 * **Explainable Smart Channels:** Build local channels from tags, folders, titles, ratings, languages, subtitles, and transcript content.
 * **Optional local analysis:** Register external model-pack descriptors for future transcription, vision, and audio adapters. Models are not bundled and analysis never requires a network connection.
 * **Versioned local data:** Configuration records are migrated into a versioned envelope so future releases can evolve storage safely.
+* **Native scan boundary:** Electron exposes a typed, validated directory-scan IPC contract for the ongoing renderer-to-main indexing migration.
 
 ---
 
