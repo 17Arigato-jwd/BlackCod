@@ -1,6 +1,7 @@
 import { get, set, del } from 'idb-keyval';
 import { AnalysisJob, AppConfig, ChannelConfig, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoChapter, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
+import { normalizeChapters } from './analysisUtils';
 
 const CONFIG_KEY = 'localtube_config';
 const CHANNEL_DATA_KEY = 'localtube_channel_data';
@@ -255,7 +256,7 @@ export const saveVideoAnalysis = async (analysis: VideoAnalysis) => {
   await set(VIDEO_ANALYSIS_KEY, analyses);
 };
 
-export const updateVideoChapters = async (videoId: string, chapters: VideoChapter[]): Promise<VideoAnalysis> => {
+export const updateVideoChapters = async (videoId: string, chapters: VideoChapter[], duration = Number.MAX_SAFE_INTEGER): Promise<VideoAnalysis> => {
   const analyses = await loadVideoAnalyses();
   const current = analyses[videoId] || {
     videoId,
@@ -269,7 +270,7 @@ export const updateVideoChapters = async (videoId: string, chapters: VideoChapte
     modelId: null,
     chapters: []
   };
-  const next = { ...current, chapters };
+  const next = { ...current, chapters: normalizeChapters(chapters, duration) };
   analyses[videoId] = next;
   await set(VIDEO_ANALYSIS_KEY, analyses);
   return next;

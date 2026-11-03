@@ -286,7 +286,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                  <button type="button" onClick={() => {
                    if (!chapterTitle.trim() || !onChaptersChange) return;
                    const start = lastTimeRef.current;
-                   const nextChapter: VideoChapter = { id: crypto.randomUUID(), start, end: video.duration || start + 60, title: chapterTitle.trim(), source: 'manual', confidence: 1, modelId: null };
+                   const nextChapter: VideoChapter = { id: crypto.randomUUID(), start: Math.min(start, Math.max(video.duration - 1, 0)), end: video.duration, title: chapterTitle.trim(), source: 'manual', confidence: 1, modelId: null };
                    onChaptersChange([...chapters, nextChapter].sort((a, b) => a.start - b.start));
                    setChapterTitle('');
                  }} className="rounded bg-[var(--yt-brand)] px-3 py-2 text-sm font-medium text-white hover:brightness-110">Add at current time</button>

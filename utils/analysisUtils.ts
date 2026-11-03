@@ -37,6 +37,18 @@ export const chaptersFromTranscript = (segments: TranscriptSegment[], duration: 
   return chapters;
 };
 
+export const normalizeChapters = (chapters: VideoChapter[], duration: number): VideoChapter[] =>
+  [...chapters]
+    .filter(chapter => Number.isFinite(chapter.start) && chapter.start >= 0 && chapter.start < duration && chapter.title.trim())
+    .sort((a, b) => a.start - b.start)
+    .map((chapter, index, ordered) => ({
+      ...chapter,
+      start: Math.max(0, Math.min(chapter.start, duration)),
+      end: Math.max(chapter.start, Math.min(ordered[index + 1]?.start ?? duration, duration)),
+      title: chapter.title.trim()
+    }))
+    .filter(chapter => chapter.end > chapter.start);
+
 export const sortAnalysisJobs = (jobs: AnalysisJob[]): AnalysisJob[] =>
   [...jobs].sort((a, b) => b.priority - a.priority || a.createdAt - b.createdAt);
 
