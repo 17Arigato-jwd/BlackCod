@@ -145,6 +145,17 @@ export interface AnalysisResourceBudget {
   maxThreads: number;
 }
 
+export interface LibraryScanJob {
+  id: string;
+  libraryId: string;
+  status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled';
+  scannedFiles: number;
+  videoFiles: number;
+  createdAt: number;
+  updatedAt: number;
+  error?: string;
+}
+
 export interface VideoTag {
   videoId: string;
   tag: string;

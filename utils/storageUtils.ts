@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { AnalysisJob, AppConfig, ChannelConfig, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoChapter, VideoIndexRecord, VideoTag } from '../types';
+import { AnalysisJob, AppConfig, ChannelConfig, LibraryScanJob, ModelPack, Playlist, SmartChannel, VideoAnalysis, VideoChapter, VideoIndexRecord, VideoTag } from '../types';
 import { isVideoFile } from './videoUtils';
 import { normalizeChapters } from './analysisUtils';
 
@@ -17,10 +17,12 @@ const VIDEO_ANALYSIS_KEY = 'localtube_video_analysis';
 const MODEL_PACKS_KEY = 'localtube_model_packs';
 const PLAY_QUEUE_KEY = 'localtube_play_queue';
 const STORAGE_SCHEMA_KEY = 'localtube_storage_schema';
+const LIBRARY_SCAN_JOBS_KEY = 'localtube_library_scan_jobs';
 export const STORAGE_SCHEMA_VERSION = 2;
 let indexedDbSchemaPromise: Promise<void> | undefined;
 
 export const ensureIndexedDbSchema = async (): Promise<void> => {
+  if (typeof indexedDB === 'undefined') return;
   if (!indexedDbSchemaPromise) {
     indexedDbSchemaPromise = (async () => {
       const stored = await get<number>(STORAGE_SCHEMA_KEY);
@@ -30,6 +32,31 @@ export const ensureIndexedDbSchema = async (): Promise<void> => {
     })();
   }
   await indexedDbSchemaPromise;
+};
+
+export const loadLibraryScanJobs = async (): Promise<LibraryScanJob[]> => {
+  if (typeof indexedDB === 'undefined') return [];
+  await ensureIndexedDbSchema();
+  return (await get<LibraryScanJob[]>(LIBRARY_SCAN_JOBS_KEY)) || [];
+};
+
+export const saveLibraryScanJob = async (job: LibraryScanJob): Promise<LibraryScanJob> => {
+  if (typeof indexedDB === 'undefined') return job;
+  const jobs = (await loadLibraryScanJobs()).filter(item => item.id !== job.id);
+  await set(LIBRARY_SCAN_JOBS_KEY, [...jobs, job]);
+  return job;
+};
+
+export const updateLibraryScanJob = async (
+  jobId: string,
+  updates: Partial<Pick<LibraryScanJob, 'status' | 'scannedFiles' | 'videoFiles' | 'updatedAt' | 'error'>>
+): Promise<LibraryScanJob | undefined> => {
+  const jobs = await loadLibraryScanJobs();
+  const current = jobs.find(job => job.id === jobId);
+  if (!current) return undefined;
+  const updated = { ...current, ...updates, updatedAt: Date.now() };
+  await saveLibraryScanJob(updated);
+  return updated;
 };
 
 interface ConfigEnvelope {
