@@ -4,6 +4,8 @@ import path from "path";
 import { normalizeNativePath } from "./utils/nativePathUtils";
 import { scanNativeDirectory } from "./utils/nativeScanUtils";
 
+const cancelledScans = new Set<string>();
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -31,12 +33,27 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
     return result.canceled ? null : result.filePaths[0] || null;
   });
-  ipcMain.handle('blackcod:scan-directory', async (_event, directoryPath: unknown) => {
+  ipcMain.handle('blackcod:scan-directory', async (event, directoryPath: unknown, scanIdValue: unknown) => {
     const safePath = normalizeNativePath(directoryPath);
     if (!safePath) throw new Error('Invalid directory path.');
     const metadata = await stat(safePath);
     if (!metadata.isDirectory()) throw new Error('The selected path is not a directory.');
-    return scanNativeDirectory(safePath);
+    const scanId = typeof scanIdValue === 'string' && scanIdValue ? scanIdValue : crypto.randomUUID();
+    cancelledScans.delete(scanId);
+    try {
+      return await scanNativeDirectory(safePath, {
+        scanId,
+        isCancelled: () => cancelledScans.has(scanId),
+        onProgress: progress => event.sender.send('blackcod:scan-progress', progress)
+      });
+    } finally {
+      cancelledScans.delete(scanId);
+    }
+  });
+  ipcMain.handle('blackcod:cancel-directory-scan', async (_event, scanId: unknown) => {
+    if (typeof scanId !== 'string' || !scanId) return false;
+    cancelledScans.add(scanId);
+    return true;
   });
   ipcMain.handle('blackcod:reveal-path', async (_event, targetPath: unknown) => {
     const safePath = normalizeNativePath(targetPath);

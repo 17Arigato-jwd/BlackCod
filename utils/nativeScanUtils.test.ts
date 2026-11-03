@@ -24,4 +24,24 @@ describe('native directory scanning', () => {
     expect(result.map(item => item.relativePath).sort()).toEqual(['nested/clip.webm', 'video.MP4']);
     expect(result.every(item => item.size > 0 && item.lastModified > 0)).toBe(true);
   });
+
+  it('reports progress and stops when cancelled', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'blackcod-scan-'));
+    temporaryDirectories.push(root);
+    await writeFile(path.join(root, 'video.mp4'), 'video');
+    let cancelled = false;
+    const progress: string[] = [];
+
+    const result = await scanNativeDirectory(root, {
+      scanId: 'scan-1',
+      isCancelled: () => cancelled,
+      onProgress: update => {
+        progress.push(update.currentPath);
+        cancelled = true;
+      }
+    });
+
+    expect(result).toHaveLength(1);
+    expect(progress).toHaveLength(1);
+  });
 });
