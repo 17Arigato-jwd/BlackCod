@@ -19,7 +19,16 @@ export interface LibraryScanResult {
   cancelled: boolean;
 }
 
-export const scanLibrary = async (request: LibraryScanRequest): Promise<LibraryScanResult> => {
+export type LibraryScanner = (
+  handle: FileSystemDirectoryHandle,
+  path: string,
+  options: DirectoryScanOptions
+) => Promise<File[]>;
+
+export const scanLibrary = async (
+  request: LibraryScanRequest,
+  scanner: LibraryScanner = getFilesRecursively
+): Promise<LibraryScanResult> => {
   let scannedFiles = 0;
   let videoFiles = 0;
   const options: DirectoryScanOptions = {
@@ -29,7 +38,7 @@ export const scanLibrary = async (request: LibraryScanRequest): Promise<LibraryS
       request.onProgress?.({ scannedFiles, videoFiles, currentPath });
     }
   };
-  const files = await getFilesRecursively(request.handle, '', options);
+  const files = await scanner(request.handle, '', options);
   videoFiles = files.length;
   request.onProgress?.({
     scannedFiles,
@@ -46,7 +55,8 @@ export const scanLibrary = async (request: LibraryScanRequest): Promise<LibraryS
 
 export const scanWithRetry = async (
   request: LibraryScanRequest,
-  attempts = 2
+  attempts = 2,
+  scanner: LibraryScanner = getFilesRecursively
 ): Promise<LibraryScanResult> => {
   let lastError: unknown;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -54,7 +64,7 @@ export const scanWithRetry = async (
       return { sourceName: request.handle.name, files: [], scannedFiles: 0, cancelled: true };
     }
     try {
-      return await scanLibrary(request);
+      return await scanLibrary(request, scanner);
     } catch (error) {
       lastError = error;
       if (request.signal?.aborted) {
