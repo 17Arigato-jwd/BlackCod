@@ -22,7 +22,6 @@ import {
   saveCustomThumbnail, 
   getDirectoryHandle,
   verifyPermission,
-  getFilesRecursively,
   loadChannels,
   saveChannel,
   rateVideo,
@@ -59,6 +58,7 @@ import {
 } from './utils/storageUtils';
 import { chaptersFromTranscript, transcriptText } from './utils/analysisUtils';
 import { chaptersFromSubtitle, parseSubtitleText, subtitleFileNameFor } from './utils/subtitleUtils';
+import { scanWithRetry } from './utils/libraryScanService';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
 const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
@@ -333,7 +333,7 @@ const App: React.FC = () => {
              setIsRestoring(true);
              await Promise.all(usableHandles.map(async ({ handle, name }) => {
                 try {
-                  const files = await getFilesRecursively(handle);
+                  const files = (await scanWithRetry({ handle })).files;
                   await processFiles(files, name, true, name); 
                 } catch (e) {
                   console.error(e);
@@ -359,7 +359,7 @@ const App: React.FC = () => {
      const remainingPerms: FileSystemDirectoryHandle[] = [];
      for (const handle of permissionRequiredHandles) {
        if (await verifyPermission(handle)) {
-          const files = await getFilesRecursively(handle);
+          const files = (await scanWithRetry({ handle })).files;
           await processFiles(files, handle.name, true, handle.name);
        } else remainingPerms.push(handle);
      }
@@ -372,7 +372,7 @@ const App: React.FC = () => {
     const remainingPerms: FileSystemDirectoryHandle[] = [];
     for (const handle of permissionRequiredHandles) {
       if (await verifyPermission(handle)) {
-         const files = await getFilesRecursively(handle);
+         const files = (await scanWithRetry({ handle })).files;
          await processFiles(files, handle.name, true, handle.name);
       } else remainingPerms.push(handle);
     }
@@ -601,7 +601,7 @@ const App: React.FC = () => {
         const handle = await window.showDirectoryPicker();
         // Do NOT save handle yet. Wait for confirmation.
         
-        const files = await getFilesRecursively(handle);
+        const files = (await scanWithRetry({ handle })).files;
         // Pass handle to prepareUpload so it can be saved on confirm
         await prepareUpload(files, handle.name, handle.name, handle);
       } catch (err) { 
@@ -793,7 +793,7 @@ const App: React.FC = () => {
                 // Note: The modal UI currently only supports a single "sourceName" and "candidateStartupFolder".
                 // If dropping multiple, we iterate.
                 
-                const folderFiles = await getFilesRecursively(handle);
+                const folderFiles = (await scanWithRetry({ handle })).files;
                 await prepareUpload(folderFiles, handle.name, handle.name, handle);
             }
       }
