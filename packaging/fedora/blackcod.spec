@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Offline-first local video library
 License:        LicenseRef-BlackCod-Custom
 URL:            https://github.com/17Arigato-jwd/BlackCod
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://github.com/17Arigato-jwd/BlackCod/archive/refs/heads/main.tar.gz
 
 BuildRequires:  nodejs
 BuildRequires:  npm
@@ -17,7 +17,7 @@ BlackCod is a privacy-first desktop video library for organizing and watching
 local media with an offline YouTube-style interface.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n BlackCod-main
 
 %build
 npm ci --ignore-scripts --include=dev

@@ -19,4 +19,7 @@ For a COPR SCM project:
    `electron` package.
 
 The package requires the repository's `package-lock.json` and runs
-`npm ci --ignore-scripts --include=dev` during `%build`.
+`npm ci --ignore-scripts --include=dev` during `%build`. The spec uses the
+GitHub `main` archive as `Source0`; this is required because COPR's `rpkg`
+source-build step does not synthesize a `blackcod-%{version}.tar.gz` archive
+from the SCM checkout.
