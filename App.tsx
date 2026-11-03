@@ -58,6 +58,7 @@ import {
   updateVideoChapters
 } from './utils/storageUtils';
 import { chaptersFromTranscript, transcriptText } from './utils/analysisUtils';
+import { chaptersFromSubtitle, parseSubtitleText, subtitleFileNameFor } from './utils/subtitleUtils';
 
 const ChannelView = lazy(() => import('./components/ChannelView').then(module => ({ default: module.ChannelView })));
 const FoldersView = lazy(() => import('./components/FoldersView').then(module => ({ default: module.FoldersView })));
@@ -560,6 +561,30 @@ const App: React.FC = () => {
       return next;
     });
     setUploadQueue(prev => prev.filter(job => job.id !== jobId));
+  };
+
+  const applySubtitleSidecars = async (files: File[], sourceName: string) => {
+    const subtitleFiles = files.filter(file => /\.(srt|vtt)$/i.test(file.name));
+    if (subtitleFiles.length === 0) return;
+    const byBaseName = new Map(subtitleFiles.map(file => [file.name.toLowerCase(), file]));
+    for (const video of videos.filter(item => item.channelName === sourceName)) {
+      const subtitleFile = subtitleFileNameFor(video.file.name)
+        .map(name => byBaseName.get(name.toLowerCase()))
+        .find(Boolean);
+      if (!subtitleFile) continue;
+      const segments = parseSubtitleText(await subtitleFile.text());
+      const analysis = videoAnalyses[video.id] || {
+        videoId: video.id, analysisVersion: 1, status: 'complete' as const, language: null,
+        summary: null, analyzedAt: Date.now(), error: null, transcript: [], modelId: null, chapters: []
+      };
+      const nextAnalysis = {
+        ...analysis,
+        transcript: segments,
+        chapters: chaptersFromSubtitle(segments, video.duration)
+      };
+      await updateVideoChapters(video.id, nextAnalysis.chapters, video.duration);
+      setVideoAnalyses(previous => ({ ...previous, [video.id]: nextAnalysis }));
+    }
   };
 
   const handleDirectoryPick = async () => {

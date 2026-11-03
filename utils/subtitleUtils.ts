@@ -1,4 +1,4 @@
-import { TranscriptSegment } from '../types';
+import { TranscriptSegment, VideoChapter } from '../types';
 
 const parseTimestamp = (value: string): number => {
   const normalized = value.replace(',', '.').trim();
@@ -37,4 +37,20 @@ export const parseSubtitleText = (content: string): TranscriptSegment[] => {
 export const subtitleFileNameFor = (videoName: string): string[] => {
   const base = videoName.replace(/\.[^.]+$/, '');
   return [`${base}.vtt`, `${base}.srt`, `${base}.en.vtt`, `${base}.en.srt`];
+};
+
+export const chaptersFromSubtitle = (segments: TranscriptSegment[], duration: number): VideoChapter[] => {
+  const candidates = segments.filter(segment => segment.start >= 0 && segment.start < duration && segment.text.trim());
+  if (candidates.length < 2) return [];
+  return candidates
+    .filter((segment, index) => index === 0 || segment.start - candidates[index - 1].start >= 30)
+    .map((segment, index, chapters) => ({
+      id: `subtitle-${segment.start}`,
+      start: segment.start,
+      end: chapters[index + 1]?.start || duration,
+      title: segment.text.split(/\s+/).slice(0, 8).join(' ').replace(/[.!?,;:]+$/, ''),
+      source: 'subtitle' as const,
+      confidence: segment.confidence,
+      modelId: null
+    }));
 };
