@@ -12,8 +12,8 @@ A high-performance desktop application designed to organize, view, and manage yo
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-1.1.2-blue.svg">
-  <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-no-red.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.1.3-blue.svg">
+  <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
   <a href="assets/LICENSE.txt">
     <img alt="License" src="https://img.shields.io/badge/License-Custom-yellow.svg">
   </a>
@@ -33,6 +33,9 @@ A high-performance desktop application designed to organize, view, and manage yo
 * **Personalization:** Deep customization options to make the player and interface look exactly how you want.
 * **Engagement Tracking:** Keep track of your journey with a built-in **History** log and a **Liked Videos** library.
 * **Seamless Navigation:** Fast search and filtering to find your content instantly.
+* **YouTube-style offline features:** Home recommendations, playlists, a playback queue, autoplay, smart chapters, transcript search, and local captions.
+* **Explainable Smart Channels:** Build local channels from tags, folders, titles, ratings, languages, subtitles, and transcript content.
+* **Optional local analysis:** Register external model-pack descriptors for future transcription, vision, and audio adapters. Models are not bundled and analysis never requires a network connection.
 
 ---
 
@@ -56,7 +59,7 @@ A high-performance desktop application designed to organize, view, and manage yo
 
 BlackCod leverages a modern tech stack to ensure speed, type safety, and a small footprint.
 
-* **Framework:** [Electron](https://www.electronjs.org/) (Cross-platform Desktop App)
+* **Framework:** [Electron](https://www.electronjs.org/) (thin cross-platform desktop shell)
 * **Language:** [TypeScript](https://www.typescriptlang.org/) & [React](https://reactjs.org/)
 * **Styling:** [TailwindCSS](https://tailwindcss.com/)
 * **Icons:** [Lucide React](https://lucide.dev/)
@@ -95,12 +98,20 @@ npm run dev
 
 ```
 
-4. **Build for Production**
+4. **Run checks and build for Production**
 
 ```bash
+npm run typecheck
+npm run test
 npm run build
-
+npm run build:main
 ```
+
+### Privacy and storage
+
+BlackCod is designed for local-first use. Video files remain in their original locations. Library metadata, preferences, playlists, analysis jobs, model-pack descriptors, and cached records are stored in browser-managed local storage and IndexedDB. The Electron renderer uses a narrow preload bridge rather than direct Node.js access.
+
+External model packs are opt-in metadata registrations. The current adapter boundary does not download or bundle models; a compatible local runtime must be supplied separately before inference can run. Analysis jobs expose cancellation and resource-budget fields so future providers can remain bounded.
 
 ---
 
@@ -128,10 +139,13 @@ BlackCod/
 
 ## 📝 Roadmap & Future Updates
 
-* [ ] Support for subtitle (SRT/VTT) uploading.
-* [ ] Custom Playlist creation.
-* [ ] Picture-in-Picture (PiP) mode.
-* [ ] Video encoding/compression tools.
+* [x] Subtitle (SRT/VTT) parsing, sidecars, captions, and caption controls.
+* [x] Custom playlists, playback queue, autoplay, and Home dashboard sections.
+* [x] Picture-in-Picture mode and smart chapters.
+* [x] Explainable Smart Channels and local analysis job scheduling.
+* [ ] Add a concrete optional Whisper-compatible local inference runtime.
+* [ ] Move long-running indexing fully into a native background service.
+* [ ] Add broader packaging, performance, and end-to-end coverage.
 
 ---
 
