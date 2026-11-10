@@ -11,13 +11,14 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-        config: {
-          setupIcon: path.resolve(__dirname, 'assets/Logo.ico'),
-          licenseFile: path.resolve(__dirname, 'LICENSE'),
-          loadingGif: path.resolve(__dirname, 'assets/Install.gif'),
-          createDesktopShortcut: true,
-          createStartMenuShortcut: true,
-          shortcutName: 'BlackCod',
+      platforms: ['win32'],
+      config: {
+        setupIcon: path.resolve(__dirname, 'assets/Logo.ico'),
+        licenseFile: path.resolve(__dirname, 'LICENSE'),
+        loadingGif: path.resolve(__dirname, 'assets/Install.gif'),
+        createDesktopShortcut: true,
+        createStartMenuShortcut: true,
+        shortcutName: 'BlackCod',
       },
     },
     {
@@ -26,10 +27,7 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
+      platforms: ['linux'],
       config: {},
     },
   ],
