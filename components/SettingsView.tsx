@@ -883,15 +883,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onUpdateConf
            </p>
            <p>
              <strong className="text-white block mb-1">Tech Stack</strong>
-             React, TailwindCSS, Lucide Icons, IndexedDB
+             React, Electron, TailwindCSS, Lucide Icons, IndexedDB
            </p>
            <p>
              <strong className="text-white block mb-1">Version</strong>
-             1.1.3
+             1.1.5
+           </p>
+           <p>
+             <strong className="text-white block mb-1">License</strong>
+             MIT License
            </p>
          </div>
        </div>
-       <p className="text-xs text-gray-500">© 2025 VCHS Studios. All rights reserved.</p>
+       <p className="text-xs text-gray-500">© 2025-2026 VCHS Studios. All rights reserved.</p>
     </div>
   );
 

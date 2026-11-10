@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LocalVideo, ChannelConfig, Playlist, VideoChapter, VideoTag, TranscriptSegment } from '../types';
-import { ThumbsUp, ThumbsDown, Share2, Download, Edit2, Star, Check, ListPlus, X } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Edit2, Star, ListPlus, X, MoreHorizontal, FolderOpen } from 'lucide-react';
 import { formatDuration, formatTimeAgo, formatBytes } from '../utils/videoUtils';
 import { ThumbnailEditor } from './ThumbnailEditor';
 import { CustomVideoPlayer } from './CustomVideoPlayer';
@@ -44,10 +44,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   video, channelConfig, suggestedVideos, onVideoSelect, isLiked, rating, onToggleLike, onRate, onUpdateThumbnail, onUpdateVideo, onChannelClick, onRemoveVideo, onRenameVideo, onToggleMiniPlayer, onTimeUpdate, onEnded, onQueueVideo, queueLength = 0, queuedVideos = [], onRemoveQueuedVideo, onClearQueue, enableGradient, autoplay = true, startTime = 0, playlists, onAddToPlaylist, onCreatePlaylist, videoTags, transcript = [], chapters = [], onChapterSelect, onChaptersChange
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [shareFeedback, setShareFeedback] = useState<'idle' | 'sharing' | 'copied'>('idle');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
   const [chapterTitle, setChapterTitle] = useState('');
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   // Ref to track time for sync if needed, though mostly handled by CustomVideoPlayer props in App
   const lastTimeRef = useRef(0);
@@ -101,47 +118,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   };
 
-  const handleShare = async () => {
-    // 1. Try Native Web Share API with File
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [video.file] })) {
-      try {
-        setShareFeedback('sharing');
-        await navigator.share({
-          files: [video.file],
-          title: video.title,
-          text: `Check out "${video.title}" on BlackCod.`
-        });
-        setShareFeedback('idle');
-        return;
-      } catch (error) {
-        console.log('File share failed or cancelled, trying fallback text share');
-      }
-    }
-
-    // 2. Try Native Web Share API with Text only (if file too big or not supported)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-           title: video.title,
-           text: `Check out "${video.title}" on BlackCod.`
-        });
-        setShareFeedback('idle');
-        return;
-      } catch (error) {
-         console.log('Text share failed or cancelled');
-      }
-    }
-
-    // 3. Fallback: Copy Title to Clipboard
-    try {
-      await navigator.clipboard.writeText(video.title);
-      setShareFeedback('copied');
-      setTimeout(() => setShareFeedback('idle'), 2000);
-    } catch (err) {
-      alert(`Share: ${video.title}`);
-    }
-  };
-
   const btn3d = enableGradient
     ? "bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg hover:bg-white/10 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-700 text-white"
     : "bg-yt-dark hover:bg-gray-700 text-yt-text hover:text-white transition-colors duration-700";
@@ -149,6 +125,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const descBg = enableGradient
     ? "bg-black/30 backdrop-blur-2xl border border-white/10"
     : "bg-yt-dark";
+
+  const dropdownClass = enableGradient
+    ? 'bg-black/60 backdrop-blur-3xl border-white/10 shadow-2xl'
+    : 'bg-yt-dark border-gray-700';
 
   return (
     <div className="flex flex-col lg:flex-row pt-6 px-4 lg:px-12 gap-6 pb-20">
@@ -211,37 +191,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </button>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
-               <div className={`flex items-center rounded-full h-9 transition-all duration-700 ${enableGradient ? 'bg-white/5 border border-white/10 backdrop-blur-md' : 'bg-yt-dark'}`}>
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap scrollbar-hide">
+               <div className={`flex items-center rounded-full h-8 sm:h-9 transition-all duration-700 ${enableGradient ? 'bg-white/5 border border-white/10 backdrop-blur-md' : 'bg-yt-dark'}`}>
                  <button 
+                   type="button"
                    onClick={() => onToggleLike(video.id)}
-                   className={`flex items-center gap-2 px-4 rounded-l-full h-full border-r ${enableGradient ? 'border-white/10 hover:bg-white/10' : 'border-[#3f3f3f] hover:bg-[#3f3f3f]'} transition-colors ${isLiked ? 'text-blue-400' : 'text-white'}`}
+                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 rounded-l-full h-full border-r ${enableGradient ? 'border-white/10 hover:bg-white/10' : 'border-[#3f3f3f] hover:bg-[#3f3f3f]'} transition-colors ${isLiked ? 'text-blue-400' : 'text-white'}`}
                  >
-                   <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-                   <span className="text-sm font-medium">{isLiked ? 'Liked' : 'Like'}</span>
+                   <ThumbsUp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-current' : ''}`} />
+                   <span className="text-xs sm:text-sm font-medium">{isLiked ? 'Liked' : 'Like'}</span>
                  </button>
-                 <button className={`px-4 rounded-r-full h-full transition-colors ${enableGradient ? 'hover:bg-white/10' : 'hover:bg-[#3f3f3f]'}`}>
-                   <ThumbsDown className="w-4 h-4 text-white" />
+                 <button 
+                   type="button"
+                   className={`px-2.5 sm:px-4 rounded-r-full h-full transition-colors ${enableGradient ? 'hover:bg-white/10' : 'hover:bg-[#3f3f3f]'}`}
+                   aria-label="Dislike"
+                 >
+                   <ThumbsDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                  </button>
                </div>
-               
-               <button 
-                  onClick={handleShare}
-                  className={`flex items-center gap-2 px-4 h-9 rounded-full ${btn3d}`}
-                  title={navigator.canShare?.({ files: [video.file] }) ? "Share video file" : "Copy title"}
-               >
-                 {shareFeedback === 'copied' ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
-                 <span className="text-sm font-medium">
-                    {shareFeedback === 'sharing' ? 'Sharing...' : shareFeedback === 'copied' ? 'Copied' : 'Share'}
-                 </span>
-               </button>
 
-               <button className={`flex items-center gap-2 px-4 h-9 rounded-full ${btn3d}`}>
-                 <Download className="w-4 h-4" />
-                 <span className="text-sm font-medium">Download</span>
-               </button>
-               <label className={`flex items-center gap-2 px-3 h-9 rounded-full ${btn3d}`}>
-                 <ListPlus className="w-4 h-4" />
+               <label className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 h-8 sm:h-9 rounded-full cursor-pointer ${btn3d}`}>
+                 <ListPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                  <select
                    value={selectedPlaylist}
                    onChange={(event) => {
@@ -254,7 +224,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                        onAddToPlaylist(playlistId);
                      }
                    }}
-                   className="max-w-32 bg-transparent text-sm font-medium text-white outline-none"
+                   className="max-w-28 sm:max-w-32 bg-transparent text-xs sm:text-sm font-medium text-white outline-none cursor-pointer"
                    aria-label="Add video to playlist"
                  >
                    <option value="" className="bg-[#181818]">Add to playlist</option>
@@ -266,6 +236,42 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                    ))}
                  </select>
                </label>
+
+               <div className="relative" ref={menuRef}>
+                 <button 
+                   type="button"
+                   onClick={() => setIsMenuOpen(prev => !prev)}
+                   className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 h-8 sm:h-9 rounded-full ${btn3d}`}
+                   title="More options"
+                   aria-label="More options"
+                   aria-expanded={isMenuOpen}
+                 >
+                   <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                 </button>
+
+                 {isMenuOpen && (
+                   <div className={`absolute right-0 top-full mt-2 w-52 border rounded-xl z-50 py-1.5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right ${dropdownClass}`}>
+                     <button 
+                       type="button"
+                       onClick={() => {
+                         const targetPath = video.path || (video.file as any)?.path;
+                         if (targetPath) {
+                           window.blackcod?.revealPath(targetPath);
+                         }
+                         setIsMenuOpen(false);
+                       }}
+                       className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3 text-sm font-medium transition-colors ${
+                         enableGradient 
+                           ? 'hover:bg-white/10 text-white' 
+                           : 'hover:bg-[#3f3f3f] text-yt-text hover:text-white'
+                       }`}
+                     >
+                       <FolderOpen className="w-4 h-4 text-blue-400 shrink-0" />
+                       <span>Open file location</span>
+                     </button>
+                   </div>
+                 )}
+               </div>
             </div>
           </div>
 

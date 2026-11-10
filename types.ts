@@ -9,6 +9,7 @@ export interface LocalVideo {
   duration: number; // in seconds
   size: number;
   lastModified: number;
+  path?: string;
 }
 
 export interface VideoRecord {

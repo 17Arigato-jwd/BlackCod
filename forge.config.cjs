@@ -13,7 +13,7 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
         config: {
           setupIcon: path.resolve(__dirname, 'assets/Logo.ico'),
-          licenseFile: path.resolve(__dirname, 'assets/LICENSE.txt'),
+          licenseFile: path.resolve(__dirname, 'LICENSE'),
           loadingGif: path.resolve(__dirname, 'assets/Install.gif'),
           createDesktopShortcut: true,
           createStartMenuShortcut: true,

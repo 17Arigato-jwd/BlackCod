@@ -1,8 +1,8 @@
 Name:           blackcod
-Version:        1.1.4
-Release:        2%{?dist}
+Version:        1.1.5
+Release:        1%{?dist}
 Summary:        Offline-first local video library
-License:        LicenseRef-BlackCod-Custom
+License:        MIT
 URL:            https://github.com/17Arigato-jwd/BlackCod
 Source0:        https://github.com/17Arigato-jwd/BlackCod/archive/refs/heads/main.tar.gz
 %global debug_package %{nil}
@@ -46,7 +46,7 @@ install -m 0644 assets/logo.svg \
 desktop-file-validate %{buildroot}%{_datadir}/applications/blackcod.desktop
 
 %files
-%license assets/LICENSE.txt
+%license LICENSE
 %doc README.md
 %{_bindir}/blackcod
 %{_libexecdir}/%{name}/
@@ -54,6 +54,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/blackcod.desktop
 %{_datadir}/icons/hicolor/scalable/apps/blackcod.svg
 
 %changelog
+* Wed Nov 04 2026 VCHS Studios <vchs@example.invalid> - 1.1.5-1
+- Bump version to 1.1.5 and switch to MIT License.
+
 * Wed Nov 04 2026 VCHS Studios <vchs@example.invalid> - 1.1.4-2
 - Require blackcod-electron and use pinned electron runtime path.
 

@@ -30,6 +30,8 @@ export const createLocalVideo = async (
     ? { thumbnailUrl: null, duration: indexedRecord.duration || 0 }
     : await extractMetadata(file);
 
+  const nativePath = (file as any).path || indexedRecord?.nativePath || indexedRecord?.path;
+
   return {
     id,
     file,
@@ -39,7 +41,8 @@ export const createLocalVideo = async (
     thumbnailUrl: customThumbnail || metadata.thumbnailUrl,
     duration: metadata.duration,
     size: file.size,
-    lastModified: file.lastModified
+    lastModified: file.lastModified,
+    path: nativePath
   };
 };
 

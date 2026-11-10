@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron';
 import { BlackCodApi, NativeScanProgress } from './ipcContracts';
 
 const api: BlackCodApi = {
-  version: '1.1.4',
+  version: '1.1.5',
   runtime: 'electron',
   selectDirectory: () => ipcRenderer.invoke('blackcod:select-directory'),
   scanDirectory: (directoryPath: string, scanId?: string) => ipcRenderer.invoke('blackcod:scan-directory', directoryPath, scanId),

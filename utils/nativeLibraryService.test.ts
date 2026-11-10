@@ -3,7 +3,7 @@ import { BlackCodApi } from '../ipcContracts';
 import { cancelNativeLibraryScan, resolveNativeMediaUrl, scanNativeLibrary } from './nativeLibraryService';
 
 const createApi = (): BlackCodApi => ({
-  version: '1.1.4',
+  version: '1.1.5',
   runtime: 'electron',
   selectDirectory: vi.fn(),
   scanDirectory: vi.fn(async (_path: string, scanId?: string) => {

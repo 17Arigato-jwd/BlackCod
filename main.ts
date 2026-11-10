@@ -75,9 +75,18 @@ app.whenReady().then(() => {
     if (!safePath) {
       return false;
     }
-    const result = await shell.openPath(safePath);
-    if (result) throw new Error(result);
-    return true;
+    try {
+      const metadata = await stat(safePath);
+      if (metadata.isDirectory()) {
+        await shell.openPath(safePath);
+      } else {
+        shell.showItemInFolder(safePath);
+      }
+      return true;
+    } catch {
+      shell.showItemInFolder(safePath);
+      return true;
+    }
   });
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const policy = [

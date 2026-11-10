@@ -12,10 +12,10 @@ A high-performance desktop application designed to organize, view, and manage yo
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-1.1.4-blue.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.1.5-blue.svg">
   <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
-  <a href="assets/LICENSE.txt">
-    <img alt="License" src="https://img.shields.io/badge/License-Custom-yellow.svg">
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg">
   </a>
 </p>
 
@@ -38,19 +38,6 @@ A high-performance desktop application designed to organize, view, and manage yo
 * **Optional local analysis:** Register external model-pack descriptors for future transcription, vision, and audio adapters. Models are not bundled and analysis never requires a network connection.
 * **Versioned local data:** Configuration records are migrated into a versioned envelope so future releases can evolve storage safely.
 * **Native scan boundary:** Electron exposes a typed, validated directory-scan IPC contract for the ongoing renderer-to-main indexing migration.
-
----
-
-## 📸 Screenshots
-
-The repository includes screenshots of the Fedora COPR publishing workflow.
-There are currently no application UI screenshots checked into the repository,
-so this section intentionally does not reference placeholder or missing app
-images.
-
-| SCM package configuration | Build results |
-| --- | --- |
-| <img src="docs/screenshots/copr-scm-package-form.png" alt="COPR SCM package configuration" width="420" /> | <img src="docs/screenshots/copr-build-result.png" alt="COPR build results" width="420" /> |
 
 ---
 
@@ -112,56 +99,68 @@ BlackCod is designed for local-first use. Video files remain in their original l
 
 External model packs are opt-in metadata registrations. The current adapter boundary does not download or bundle models; a compatible local runtime must be supplied separately before inference can run. Analysis jobs expose cancellation and resource-budget fields so future providers can remain bounded.
 
-### Fedora COPR
+### 📥 Multi-OS Downloads & Installation
 
-The Fedora download channel for BlackCod is the
-[17Arigato-jwd/blackcod COPR repository](https://copr.fedorainfracloud.org/coprs/17Arigato-jwd/blackcod/).
-It provides Fedora RPM packages built from source. BlackCod uses the
-distribution Electron runtime; on Fedora, Electron is provided through the
-Terra repository.
+BlackCod releases are automatically built and published across all major platforms using GitHub Actions on every version release. Download the appropriate package from the [GitHub Releases](https://github.com/17Arigato-jwd/BlackCod/releases) page:
+
+* **Windows:**
+  - Download the Squirrel installer: `BlackCod-<version> Setup.exe`.
+  - Run the setup executable. BlackCod installs and creates shortcuts on the Desktop and Start Menu automatically.
+* **macOS:**
+  - Download the standalone archive: `BlackCod-darwin-x64-<version>.zip` (or arm64).
+  - Extract the archive and drag `BlackCod.app` into `/Applications`.
+* **Ubuntu / Debian:**
+  - Download the Debian package: `blackcod_<version>_amd64.deb`.
+  - Install via APT or dpkg:
+    ```bash
+    sudo apt install ./blackcod_<version>_amd64.deb
+    ```
+* **Fedora / Red Hat (Direct RPM):**
+  - Download the RPM package: `blackcod-<version>.x86_64.rpm`.
+  - Install via DNF:
+    ```bash
+    sudo dnf install ./blackcod-<version>.x86_64.rpm
+    ```
+
+---
+
+### 📦 Fedora COPR Repository (Recommended for Fedora)
+
+For Fedora users, BlackCod is available directly through the official
+[17arigato-jwd/blackcod COPR repository](https://copr.fedorainfracloud.org/coprs/17arigato-jwd/blackcod/).
+
+BlackCod on Fedora features a clean **dual-package architecture**:
+* `blackcod`: Contains the core application assets, launcher script (`/usr/bin/blackcod`), `.desktop` entry, and app icons.
+* `blackcod-electron`: Companion package providing the pinned Electron runtime (v39.2.7).
+
+Both packages are hosted within the same Copr repository, allowing `dnf` to automatically resolve and install `blackcod-electron` as a dependency. **No third-party repositories are required.**
 
 #### Install BlackCod on Fedora
 
-On a supported Fedora system, enable Terra for the Electron runtime, then
-enable the BlackCod COPR repository and install BlackCod:
+Enable the Copr repository and install BlackCod:
 
 ```bash
-sudo dnf config-manager addrepo --from-repofile=https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
-sudo dnf install terra-release
-sudo dnf copr enable 17Arigato-jwd/blackcod
+sudo dnf copr enable 17arigato-jwd/blackcod
 sudo dnf install blackcod
 ```
 
-If `dnf copr` is not available, install the COPR command plugin first:
+If `dnf copr` is not available on your system, install the COPR command plugin first:
 
 ```bash
 sudo dnf install 'dnf-command(copr)'
 ```
 
-If `dnf config-manager` is not available, install its plugin first:
-
-```bash
-sudo dnf install 'dnf-command(config-manager)'
-```
-
-Terra is a third-party Fedora repository. Review its repository policy and
-signing configuration before enabling it. It is required because Fedora's
-standard repositories do not currently provide the `electron` runtime needed
-by the BlackCod RPM.
-
-Launch it from the application menu or run:
+Launch BlackCod from your application menu or run:
 
 ```bash
 blackcod
 ```
 
-The package installs the application launcher, desktop entry, icon, and Fedora
-runtime dependencies. Your video files stay on your machine; installing from
-COPR does not upload or synchronize your media library.
+The package installs the application launcher, desktop entry, icon, and runtime dependencies. Your media files stay on your machine; installing from COPR does not upload or synchronize your media library.
 
 #### Update, remove, or disable the repository
 
-Update BlackCod with the rest of your Fedora packages:
+Update BlackCod with your standard Fedora package updates:
 
 ```bash
 sudo dnf upgrade blackcod
@@ -176,7 +175,7 @@ sudo dnf remove blackcod
 Disable the BlackCod COPR repository:
 
 ```bash
-sudo dnf copr disable 17Arigato-jwd/blackcod
+sudo dnf copr disable 17arigato-jwd/blackcod
 ```
 
 To inspect whether the repository is enabled:
@@ -185,11 +184,10 @@ To inspect whether the repository is enabled:
 dnf repolist | grep -i blackcod
 ```
 
-#### COPR maintainer notes
+#### COPR Maintainer Notes
 
 The package is built from the Git repository using the Fedora spec in
-[packaging/fedora](./packaging/fedora). Maintainers should configure the SCM
-package with:
+[packaging/fedora](./packaging/fedora). Maintainers configure the SCM package with:
 
 | Field | Value |
 | --- | --- |
@@ -198,8 +196,7 @@ package with:
 | Spec file | `packaging/fedora/blackcod.spec` |
 | Build method | `rpkg` |
 
-COPR builds the commit visible on the configured branch. Publish changes
-before rebuilding:
+COPR builds the commit visible on the configured branch. Publish changes before rebuilding:
 
 ```bash
 git add -A
@@ -207,25 +204,19 @@ git commit -m "Describe the change"
 git push origin main
 ```
 
-The build requires internet access because the spec runs `npm ci`. Detailed
-packaging notes and troubleshooting are in
-[packaging/fedora/README.md](./packaging/fedora/README.md).
+The build requires internet access because the spec runs `npm ci`. Detailed packaging notes and troubleshooting are in [packaging/fedora/README.md](./packaging/fedora/README.md).
 
-The RPM declares `Requires: electron`. COPR can build the package without
-resolving runtime dependencies, but end-user installation needs the Terra
-repository enabled as shown above.
+The RPM declares `Requires: blackcod-electron`. Both packages are maintained within the same Copr repository, eliminating any dependency on external third-party repositories.
 
-For maintainers, common build issues include:
+---
 
-- **Missing `blackcod-*.tar.gz`:** ensure the SCM package uses the current
-  `packaging/fedora/blackcod.spec`, whose `Source0` points to the GitHub
-  archive.
-- **Missing build-id for esbuild:** ensure the spec runs
-  `npm prune --omit=dev` after the build and before `%install`.
-- **Empty debugsource file list:** ensure the spec contains
-  `%global debug_package %{nil}`.
-- **Build uses old behavior:** verify the packaging commits were pushed to
-  GitHub before rebuilding.
+### 🤖 Automated GitHub Actions Releases
+
+BlackCod leverages GitHub Actions (`.github/workflows/release.yml`) for automated multi-OS release builds triggered by tag pushes (`v*`) or manual `workflow_dispatch`. The release pipeline:
+- Builds Squirrel `.exe` installers on `windows-latest`.
+- Builds standalone application `.zip` archives on `macos-latest`.
+- Builds `.deb` and `.rpm` Linux packages on `ubuntu-latest`.
+- Packages all release artifacts via Electron Forge (`npm run make`) and automatically drafts a GitHub Release with downloadable binary assets.
 
 ---
 
@@ -233,7 +224,8 @@ For maintainers, common build issues include:
 
 ```text
 BlackCod/
-├── assets/             # Media, logo, and LICENSE.txt
+├── assets/             # Media, logo, and icons
+├── LICENSE             # MIT License
 ├── components/         # Reusable React components
 ├── hooks/              # Custom React logic/hooks
 ├── input/              # Input handling or data entry logic
@@ -278,7 +270,7 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## 📄 License
 
-Distributed under a Custom License. See [LICENSE.txt](https://www.google.com/search?q=assets/LICENSE.txt) for more information.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ---
 
